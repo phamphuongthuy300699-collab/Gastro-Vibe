@@ -1,3 +1,4 @@
+// Removed reference to 'vite/client' to fix "Cannot find type definition file" error.
 // /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
