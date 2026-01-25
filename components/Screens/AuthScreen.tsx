@@ -96,7 +96,7 @@ export const AuthScreen: React.FC = () => {
             </form>
             
             <p className="text-center text-[10px] text-white/20 mt-8">
-                Нет аккаунта? Создайте его в Supabase Dashboard > Authentication.
+                Нет аккаунта? Создайте его в Supabase Dashboard &gt; Authentication.
             </p>
         </div>
     </div>
