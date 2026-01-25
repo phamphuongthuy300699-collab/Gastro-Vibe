@@ -1,0 +1,187 @@
+
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useGameStore } from '../../store/GameContext';
+
+export const CollectionSelector: React.FC = () => {
+  const { activeCollection, openCollection, addToOrder, menuItems } = useGameStore();
+  // Map of course index -> selected dish ID
+  const [selections, setSelections] = useState<Record<number, string>>({});
+  const [swappingCourseIndex, setSwappingCourseIndex] = useState<number | null>(null);
+  const [quantity, setQuantity] = useState(1);
+
+  useEffect(() => {
+    if (activeCollection) {
+      const initialSelections: Record<number, string> = {};
+      activeCollection.courses.forEach((course, index) => {
+        initialSelections[index] = course.defaultDishId;
+      });
+      setSelections(initialSelections);
+      setSwappingCourseIndex(null);
+      setQuantity(1);
+    }
+  }, [activeCollection]);
+
+  if (!activeCollection) return null;
+
+  const handleSwap = (courseIndex: number, dishId: string) => {
+      setSelections(prev => ({ ...prev, [courseIndex]: dishId }));
+      setSwappingCourseIndex(null);
+  };
+
+  const handleAddSet = () => {
+      // Add each item in the selection to order, multiplied by set quantity
+      Object.values(selections).forEach((dishId) => {
+          addToOrder({ dishId: dishId as string, quantity: quantity });
+      });
+      openCollection(null);
+  };
+
+  const calculateTotalPrice = () => {
+     return activeCollection.price * quantity;
+  };
+
+  return (
+    <AnimatePresence>
+      <div className="fixed inset-0 z-[60] flex items-end justify-center pointer-events-none">
+        <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }}
+            onClick={() => openCollection(null)}
+            className="absolute inset-0 bg-black/50 backdrop-blur-[2px] pointer-events-auto"
+        />
+
+        <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className="relative w-full h-[95vh] bg-background-light rounded-t-2xl overflow-hidden shadow-2xl pointer-events-auto flex flex-col"
+        >
+             {/* Header */}
+             <div className="relative h-56 shrink-0 z-10 group">
+                 <div className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style={{ backgroundImage: `url('${activeCollection.imageUrl}')` }}></div>
+                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                 
+                 <button 
+                    onClick={() => openCollection(null)} 
+                    className="absolute top-4 right-4 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white/40 transition-colors"
+                 >
+                    <span className="material-symbols-outlined text-[24px]">close</span>
+                 </button>
+                 
+                 <div className="absolute bottom-6 left-6 right-6">
+                     <span className="inline-block bg-primary/90 text-white text-[10px] font-bold uppercase tracking-[0.2em] px-3 py-1 rounded-full mb-3 backdrop-blur-sm">Сет Меню</span>
+                     <h2 className="text-4xl font-serif text-white italic drop-shadow-md leading-none">{activeCollection.title}</h2>
+                 </div>
+             </div>
+
+             {/* Content */}
+             <div className="flex-1 overflow-y-auto px-6 py-6 relative z-10 no-scrollbar pb-36 bg-background-light">
+                 <p className="text-text-main/70 text-base mb-8 leading-relaxed font-serif italic border-l-2 border-primary/20 pl-4">
+                    "{activeCollection.description}"
+                 </p>
+
+                 <div className="space-y-6">
+                     {activeCollection.courses.map((course, index) => {
+                         const selectedDishId = selections[index];
+                         const selectedDish = menuItems.find(d => d.id === selectedDishId);
+                         
+                         if (!selectedDish) return null;
+
+                         return (
+                             <div key={index} className="bg-white border border-[#F0EAE5] rounded-xl p-4 shadow-sm relative overflow-hidden transition-all hover:shadow-md">
+                                 <div className="flex justify-between items-center mb-4">
+                                     <span className="text-[10px] font-bold text-text-main/40 uppercase tracking-widest">{course.courseName}</span>
+                                     {course.options.length > 1 && (
+                                         <button 
+                                            onClick={() => setSwappingCourseIndex(index)}
+                                            className="text-[10px] text-primary font-bold uppercase tracking-wider flex items-center gap-1 hover:bg-primary/5 px-2 py-1 rounded transition-colors"
+                                         >
+                                             <span className="material-icons-round text-[14px]">swap_horiz</span>
+                                             Заменить
+                                         </button>
+                                     )}
+                                 </div>
+                                 
+                                 <div className="flex gap-4 items-center">
+                                     <div className="w-20 h-20 rounded-lg bg-cover bg-center shrink-0 shadow-inner" style={{ backgroundImage: `url('${selectedDish.imageUrl}')` }}></div>
+                                     <div className="flex-1 min-w-0">
+                                         <h4 className="text-text-main font-serif text-xl font-medium leading-tight mb-1 truncate">{selectedDish.name}</h4>
+                                         <p className="text-xs text-text-main/50 line-clamp-2 leading-relaxed">{selectedDish.description}</p>
+                                     </div>
+                                 </div>
+
+                                 {/* Swap Selection Area (Inline Expansion) */}
+                                 <AnimatePresence>
+                                     {swappingCourseIndex === index && (
+                                         <motion.div 
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: 'auto', opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            className="overflow-hidden border-t border-dashed border-gray-200 mt-4 pt-4"
+                                         >
+                                             <p className="text-[10px] text-text-main/40 uppercase tracking-wider mb-3 font-bold">Выберите вариант:</p>
+                                             <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
+                                                 {course.options.map(optId => {
+                                                     const optDish = menuItems.find(d => d.id === optId);
+                                                     if (!optDish) return null;
+                                                     const isSelected = selectedDishId === optId;
+                                                     return (
+                                                         <div 
+                                                            key={optId} 
+                                                            onClick={() => handleSwap(index, optId)}
+                                                            className={`shrink-0 w-32 cursor-pointer rounded-xl border-2 transition-all overflow-hidden ${isSelected ? 'border-primary shadow-md scale-[1.02]' : 'border-transparent bg-gray-50 hover:bg-gray-100'}`}
+                                                         >
+                                                             <div className="h-24 w-full bg-cover bg-center" style={{ backgroundImage: `url('${optDish.imageUrl}')` }}></div>
+                                                             <div className={`p-3 ${isSelected ? 'bg-primary text-white' : 'bg-transparent text-text-main'}`}>
+                                                                 <p className="text-[10px] font-bold leading-tight line-clamp-2">{optDish.name}</p>
+                                                             </div>
+                                                         </div>
+                                                     )
+                                                 })}
+                                             </div>
+                                         </motion.div>
+                                     )}
+                                 </AnimatePresence>
+                             </div>
+                         );
+                     })}
+                 </div>
+             </div>
+
+             {/* Footer */}
+             <div className="absolute bottom-0 left-0 w-full bg-white/95 backdrop-blur-md border-t border-[#F0EAE5] px-6 py-6 z-30 shadow-[0_-5px_20px_rgba(0,0,0,0.05)]">
+                 <div className="flex items-center gap-4">
+                     {/* Quantity Control */}
+                     <div className="flex items-center bg-gray-100 rounded-xl h-14 px-2 shrink-0">
+                        <button 
+                            onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                            className="w-10 h-full flex items-center justify-center text-text-main/50 hover:text-text-main active:scale-90 transition-transform"
+                        >
+                            <span className="material-icons-round text-xl">remove</span>
+                        </button>
+                        <span className="w-8 text-center font-bold text-lg text-text-main tabular-nums">{quantity}</span>
+                        <button 
+                            onClick={() => setQuantity(quantity + 1)}
+                            className="w-10 h-full flex items-center justify-center text-text-main/50 hover:text-text-main active:scale-90 transition-transform"
+                        >
+                            <span className="material-icons-round text-xl">add</span>
+                        </button>
+                    </div>
+
+                     <button 
+                        onClick={handleAddSet}
+                        className="flex-1 bg-text-main text-white hover:bg-primary transition-all duration-300 font-bold text-sm uppercase tracking-[0.15em] h-14 rounded-xl flex items-center justify-between px-6 shadow-lg active:scale-[0.98]"
+                     >
+                         <span>В корзину</span>
+                         <span className="font-serif italic text-xl">{calculateTotalPrice()} ₽</span>
+                     </button>
+                 </div>
+             </div>
+        </motion.div>
+      </div>
+    </AnimatePresence>
+  );
+};
