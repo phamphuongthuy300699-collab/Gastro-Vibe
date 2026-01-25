@@ -35,14 +35,33 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   // Data State
   const [userProfile, setUserProfile] = useState<UserProfile>(CURRENT_USER_PROFILE);
-  const [session] = useState<TableSession>(CURRENT_SESSION);
+  
+  // --- SESSION INITIALIZATION LOGIC (QR Code Support) ---
+  const [session, setSession] = useState<TableSession>(() => {
+      // Check URL params for ?table=ID
+      const params = new URLSearchParams(window.location.search);
+      const tableParam = params.get('table');
+
+      if (tableParam) {
+          // If launched via QR code, create a fresh session for this table
+          return {
+              id: `sess_${Date.now()}`, // Unique session ID
+              tableId: tableParam,      // e.g. "12" or "table_5"
+              status: 'active',
+              createdAt: new Date().toISOString()
+          };
+      }
+      
+      // Fallback to mock session for dev/demo
+      return CURRENT_SESSION;
+  });
   
   // --- MOCK PARTICIPANTS FOR DEMO ---
   const [participants, setParticipants] = useState<Participant[]>([
       ...PARTICIPANTS, // You (p1)
       {
         id: 'p2',
-        sessionId: 'sess_123',
+        sessionId: session.id, // Ensure they belong to current session
         nickname: 'Алиса',
         avatarUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=200',
         isLeader: false,
@@ -50,7 +69,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       },
       {
         id: 'p3',
-        sessionId: 'sess_123',
+        sessionId: session.id,
         nickname: 'Борис',
         avatarUrl: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&q=80&w=200',
         isLeader: false,

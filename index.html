@@ -14,22 +14,19 @@
         theme: {
           extend: {
             colors: {
-              // Margarita Brand Colors (Updated)
-              primary: "#C5A059", // Muted Gold / Champagne
+              primary: "#C5A059",
               "primary-dark": "#A08040",
               "background-light": "#FFFFFF",
               "background-soft": "#F9F7E8", 
-              "text-main": "#1C1C1C", // Matte Black (Anthracite)
+              "text-main": "#1C1C1C",
               "text-light": "#F9F7E8",
               "status-green": "#6B8E23",
-              
-              // Legacy/Compat
-              "anthracite": "#1C1C1C", // Updated to requested Matte Black
+              "anthracite": "#1C1C1C",
               "gold": "#C5A059",
             },
             fontFamily: {
               sans: ["Manrope", "sans-serif"],
-              logo: ["Montserrat", "sans-serif"], // Geometric Sans
+              logo: ["Montserrat", "sans-serif"],
               mono: ["Space Mono", "monospace"],
             },
             backgroundImage: {
@@ -69,28 +66,17 @@
         font-variation-settings: 'FILL' 1, 'wght' 300, 'GRAD' 0, 'opsz' 24;
       }
       
-      /* Open A Customization for Montserrat (Simulation via transform) */
       .font-logo-custom {
           font-family: 'Montserrat', sans-serif;
       }
 
-      /* --- NEW WOOD ZIGZAG PATTERN (Stroked Sticks + Borders) --- */
       :root {
-        /* Colors matching the reference photo */
         --wood-color: #d6b58e; 
         --gap-color: #1a1a1b;
       }
 
       .restaurant-wall {
         background-color: var(--gap-color);
-        /* 
-           SVG Pattern:
-           - ViewBox 0 0 24 40
-           - Top Border: M0,2 H24 (Horizontal line at top)
-           - Bottom Border: M0,38 H24 (Horizontal line at bottom)
-           - Zigzag: M0,2 L12,38 L24,2 (Connects top-left to bottom-center to top-right)
-           - Stroke width 4px simulates the wooden slat thickness
-        */
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='40' viewBox='0 0 24 40'%3E%3Cpath d='M0,2 H24 M0,38 H24 M0,2 L12,38 L24,2' fill='none' stroke='%23d6b58e' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
         background-size: 24px 40px;
         background-repeat: repeat-x;
@@ -100,13 +86,13 @@
 <script type="importmap">
 {
   "imports": {
-    "vite": "https://esm.sh/vite@^7.3.1",
-    "framer-motion": "https://esm.sh/framer-motion@^12.29.0",
+    "react": "https://esm.sh/react@^19.2.3",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
-    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.91.1"
+    "framer-motion": "https://esm.sh/framer-motion@^12.29.0",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.91.1",
+    "vite": "https://esm.sh/vite@^7.3.1",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2"
   }
 }
 </script>

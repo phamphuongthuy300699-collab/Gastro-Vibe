@@ -93,6 +93,11 @@ export const TableScreen: React.FC = () => {
 
   const totalBill = orderItems.reduce((acc, i) => acc + (i.priceAtOrder * i.quantity), 0);
   
+  // Helper to normalize table ID for display (handle "table_12" vs "12")
+  const displayTableId = session.tableId.includes('table_') 
+      ? session.tableId.replace('table_', '') 
+      : session.tableId;
+
   // Group orders by participant
   const groupedOrders = participants.map(p => ({
       participant: p,
@@ -137,8 +142,9 @@ export const TableScreen: React.FC = () => {
             
             {/* Content */}
             <div className="absolute inset-0 flex flex-col items-center justify-center text-white z-10 pt-4 bg-black/20">
-                <h2 className="text-5xl font-logo font-bold tracking-widest uppercase drop-shadow-md text-white">
-                    {session.tableId.replace('table_', '')}
+                <span className="text-[10px] font-bold uppercase tracking-widest text-white/60 mb-2">Ваш стол</span>
+                <h2 className="text-6xl font-logo font-bold tracking-widest uppercase drop-shadow-md text-white leading-none">
+                    {displayTableId}
                 </h2>
                 <div className="h-[1px] w-12 bg-white/80 my-3"></div>
                 <p className="text-[10px] font-sans font-medium opacity-90 tracking-[0.2em] uppercase text-white">Зал • 1 этаж</p>
