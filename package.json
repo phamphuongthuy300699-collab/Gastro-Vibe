@@ -1,7 +1,7 @@
 {
   "name": "gastro-vibe",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "engines": {
     "node": ">=18.0.0"
@@ -14,7 +14,7 @@
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "framer-motion": "^10.18.0",
+    "framer-motion": "^11.0.0",
     "@supabase/supabase-js": "^2.39.7",
     "clsx": "^2.1.0",
     "tailwind-merge": "^2.2.1"
