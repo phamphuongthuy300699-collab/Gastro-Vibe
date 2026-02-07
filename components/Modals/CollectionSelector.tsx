@@ -1,11 +1,11 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '../../store/GameContext';
+import { Dish } from '../../types';
 
 export const CollectionSelector: React.FC = () => {
   const { activeCollection, openCollection, addToOrder, menuItems } = useGameStore();
-  // Map of course index -> selected dish ID
+  // Map of course index -> selected dish ID (or slug)
   const [selections, setSelections] = useState<Record<number, string>>({});
   const [swappingCourseIndex, setSwappingCourseIndex] = useState<number | null>(null);
   const [quantity, setQuantity] = useState(1);
@@ -24,6 +24,12 @@ export const CollectionSelector: React.FC = () => {
 
   if (!activeCollection) return null;
 
+  // Helper to find a dish by either its Real ID (UUID) or its Slug (Text ID)
+  // This bridges the gap between the Collection data (Text) and Menu data (UUID)
+  const findDish = (identifier: string): Dish | undefined => {
+      return menuItems.find(d => d.id === identifier || d.slug === identifier);
+  };
+
   const handleSwap = (courseIndex: number, dishId: string) => {
       setSelections(prev => ({ ...prev, [courseIndex]: dishId }));
       setSwappingCourseIndex(null);
@@ -31,8 +37,9 @@ export const CollectionSelector: React.FC = () => {
 
   const handleAddSet = () => {
       // Add each item in the selection to order, multiplied by set quantity
-      Object.values(selections).forEach((dishId) => {
-          addToOrder({ dishId: dishId as string, quantity: quantity });
+      Object.values(selections).forEach((dishIdentifier) => {
+          // We pass the identifier, addToOrder will perform the robust lookup again
+          addToOrder({ dishId: dishIdentifier as string, quantity: quantity });
       });
       openCollection(null);
   };
@@ -86,9 +93,20 @@ export const CollectionSelector: React.FC = () => {
                  <div className="space-y-6">
                      {activeCollection.courses.map((course, index) => {
                          const selectedDishId = selections[index];
-                         const selectedDish = menuItems.find(d => d.id === selectedDishId);
+                         const selectedDish = findDish(selectedDishId);
                          
-                         if (!selectedDish) return null;
+                         // Fallback UI if dish is missing in DB
+                         if (!selectedDish) {
+                             return (
+                                 <div key={index} className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3">
+                                     <span className="material-icons-round text-red-400">error_outline</span>
+                                     <div className="text-xs text-red-400">
+                                         <span className="font-bold block uppercase">Блюдо недоступно</span>
+                                         Код: "{selectedDishId}"
+                                     </div>
+                                 </div>
+                             )
+                         }
 
                          return (
                              <div key={index} className="bg-white border border-[#F0EAE5] rounded-xl p-4 shadow-sm relative overflow-hidden transition-all hover:shadow-md">
@@ -125,7 +143,7 @@ export const CollectionSelector: React.FC = () => {
                                              <p className="text-[10px] text-text-main/40 uppercase tracking-wider mb-3 font-bold">Выберите вариант:</p>
                                              <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
                                                  {course.options.map(optId => {
-                                                     const optDish = menuItems.find(d => d.id === optId);
+                                                     const optDish = findDish(optId);
                                                      if (!optDish) return null;
                                                      const isSelected = selectedDishId === optId;
                                                      return (

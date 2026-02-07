@@ -1,7 +1,185 @@
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useGameStore } from '../../store/GameContext';
-import { STORIES, COLLECTIONS } from '../../constants';
+import { Dish } from '../../types';
+
+// --- SUB-COMPONENT: Grid Item with Swipe ---
+const MenuGridItem: React.FC<{ item: Dish; onClick: () => void }> = ({ item, onClick }) => {
+    const [activeIndex, setActiveIndex] = useState(0);
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const videoRef = useRef<HTMLVideoElement>(null);
+
+    const handleScroll = () => {
+        if (scrollRef.current) {
+            const width = scrollRef.current.offsetWidth;
+            const scrollLeft = scrollRef.current.scrollLeft;
+            const newIndex = Math.round(scrollLeft / width);
+            setActiveIndex(newIndex);
+            
+            // Play video if it's the active slide
+            if (newIndex === 1 && videoRef.current) {
+                videoRef.current.play().catch(e => console.warn("Swipe play failed", e));
+            } else if (newIndex === 0 && videoRef.current) {
+                videoRef.current.pause();
+            }
+        }
+    };
+
+    // Autoplay hack for iOS
+    useEffect(() => {
+        if (videoRef.current) {
+            videoRef.current.defaultMuted = true;
+            videoRef.current.muted = true;
+        }
+    }, [item.videoUrl]);
+
+    const hasVideo = !!item.videoUrl;
+
+    return (
+        <div className="group cursor-pointer mb-8" onClick={onClick}>
+            <div className="relative rounded-xl overflow-hidden aspect-[3/4] mb-3 bg-gray-100 shadow-sm border border-black/5">
+                
+                {/* Carousel Container */}
+                <div 
+                    ref={scrollRef}
+                    onScroll={handleScroll}
+                    className="flex w-full h-full overflow-x-auto snap-x snap-mandatory no-scrollbar"
+                >
+                    {/* Slide 1: Image */}
+                    <div className="w-full h-full flex-shrink-0 snap-center relative">
+                        <img 
+                            alt={item.name} 
+                            className="w-full h-full object-cover" 
+                            src={item.imageUrl} 
+                            loading="lazy"
+                        />
+                    </div>
+
+                    {/* Slide 2: Video (Only if exists) */}
+                    {hasVideo && (
+                        <div className="w-full h-full flex-shrink-0 snap-center relative bg-black">
+                            <video 
+                                ref={videoRef}
+                                src={item.videoUrl} 
+                                className="w-full h-full object-cover opacity-90"
+                                muted 
+                                loop 
+                                playsInline 
+                            />
+                        </div>
+                    )}
+                </div>
+
+                {/* Price Tag (Always Visible) */}
+                <div className="absolute top-2 right-2 z-10">
+                    <div className="bg-anthracite/90 backdrop-blur px-2 py-1 rounded-md shadow-sm border border-white/10">
+                        <span className="text-xs font-bold text-primary tabular-nums">{item.price} ₽</span>
+                    </div>
+                </div>
+
+                {/* Dots Indicator (Only if video exists) */}
+                {hasVideo && (
+                    <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 z-10 pointer-events-none">
+                        <div className={`w-1.5 h-1.5 rounded-full shadow-sm transition-all ${activeIndex === 0 ? 'bg-white scale-125' : 'bg-white/40'}`}></div>
+                        <div className={`w-1.5 h-1.5 rounded-full shadow-sm transition-all ${activeIndex === 1 ? 'bg-primary scale-125' : 'bg-white/40'}`}></div>
+                    </div>
+                )}
+            </div>
+
+            <div className="px-1">
+                <h3 className="font-bold text-[12px] uppercase tracking-wide leading-tight mb-1 text-text-main">{item.name}</h3>
+                <p className="text-[10px] text-text-main/60 leading-relaxed font-sans line-clamp-2">{item.description}</p>
+            </div>
+        </div>
+    );
+};
+
+// --- SUB-COMPONENT: Vibe Feed Item (Fixes Hook Error) ---
+const VibeFeedItem: React.FC<{ 
+    item: Dish; 
+    isMuted: boolean; 
+    toggleMute: () => void;
+    onOpen: () => void;
+    onAdd: () => void;
+}> = ({ item, isMuted, toggleMute, onOpen, onAdd }) => {
+    const vRef = useRef<HTMLVideoElement>(null);
+
+    // Vibe Feed Autoplay Logic
+    useEffect(() => {
+        if (vRef.current) {
+            vRef.current.defaultMuted = true;
+            vRef.current.muted = true; // Ensure mute property is set on DOM element
+            vRef.current.play().catch(e => console.log("Autoplay prevented", e));
+        }
+    }, []);
+
+    return (
+        <div className="w-full h-full snap-start relative shrink-0">
+            {item.videoUrl ? (
+                    <div className="w-full h-full relative">
+                    <video 
+                        ref={vRef}
+                        src={item.videoUrl} 
+                        className="w-full h-full object-cover" 
+                        autoPlay 
+                        muted={isMuted} // React prop
+                        loop 
+                        playsInline 
+                    />
+                    {/* Mute Toggle */}
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); toggleMute(); }}
+                        className="absolute top-24 right-4 z-20 w-10 h-10 bg-black/40 backdrop-blur rounded-full flex items-center justify-center text-white/80 hover:bg-black/60 transition"
+                    >
+                        <span className="material-icons-round text-xl">
+                            {isMuted ? 'volume_off' : 'volume_up'}
+                        </span>
+                    </button>
+                    </div>
+            ) : (
+                <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+            )}
+            
+            <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/90 pointer-events-none"></div>
+
+            <div className="absolute bottom-24 left-0 w-full px-6 text-white pb-6 z-10">
+                <div className="flex justify-between items-end mb-4">
+                        <div className="flex-1 pr-4">
+                        <div className="flex gap-2 mb-2">
+                            {item.badges.length > 0 && (
+                                <span className="inline-block bg-primary/90 text-anthracite text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-sm">
+                                    {item.badges[0]}
+                                </span>
+                            )}
+                            {item.abv && (
+                                <span className="inline-block bg-white/20 backdrop-blur text-white text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-sm">
+                                    ABV {item.abv}%
+                                </span>
+                            )}
+                        </div>
+                        <h2 className="text-3xl font-logo font-bold uppercase tracking-wider mb-2 leading-none drop-shadow-md">{item.name}</h2>
+                        <p className="text-sm text-white/80 line-clamp-3 font-light leading-relaxed">{item.description}</p>
+                        </div>
+                        <div className="text-3xl font-bold text-primary font-mono whitespace-nowrap">{item.price} ₽</div>
+                </div>
+                
+                <div className="mt-6 flex gap-3">
+                    <button 
+                        onClick={onOpen}
+                        className="flex-1 bg-white/10 backdrop-blur-md border border-white/20 text-white font-bold text-xs uppercase tracking-widest py-4 rounded-xl hover:bg-white/20 transition-colors"
+                    >
+                        Подробнее
+                    </button>
+                        <button 
+                        onClick={onAdd}
+                        className="w-14 h-14 bg-primary text-anthracite rounded-xl flex items-center justify-center hover:scale-105 transition-transform shadow-lg shadow-primary/30"
+                    >
+                        <span className="material-icons-round text-2xl">add</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 export const MenuScreen: React.FC = () => {
   const { 
@@ -13,7 +191,9 @@ export const MenuScreen: React.FC = () => {
     isLoading, 
     addToOrder,
     setMenuOpen,
-    setActiveTab // Added
+    setActiveTab,
+    stories,      
+    collections   
   } = useGameStore();
   
   const [activeCategoryId, setActiveCategoryId] = useState<string>('all');
@@ -30,41 +210,35 @@ export const MenuScreen: React.FC = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const storiesContainerRef = useRef<HTMLDivElement>(null);
 
-  // --- VIBE FEED LOGIC ---
+  // --- VIBE FEED LOGIC (UPDATED SORTING) ---
   const vibeFeedItems = useMemo(() => {
-      // 1. Define High Margin Categories
-      const highMarginCats = ['cat_steaks', 'cat_bar_cocktails', 'cat_hot'];
-      const lowPriorityCats = ['cat_breakfast', 'cat_sides', 'cat_soft', 'cat_bar_tea', 'cat_bar_soft'];
+      // 1. Defined Priority List (IDs or Slugs)
+      const PINNED_IDS = ['stk_ribeye', 'cof_cap', 'soup_mushroom', 'pst_orzo'];
       
-      const highPriority: any[] = [];
-      const mediumPriority: any[] = [];
-      const lowPriority: any[] = [];
+      const pinned: any[] = [];
+      const others: any[] = [];
 
       menuItems.forEach(item => {
-          if (highMarginCats.includes(item.categoryId)) {
-              highPriority.push(item);
-          } else if (lowPriorityCats.includes(item.categoryId)) {
-              lowPriority.push(item);
+          // Check both ID and Slug for robustness
+          const id = item.slug || item.id;
+          if (PINNED_IDS.includes(id)) {
+              pinned.push(item);
           } else {
-              mediumPriority.push(item);
+              others.push(item);
           }
       });
 
-      // Simple shuffle function
-      const shuffle = (array: any[]) => array.sort(() => Math.random() - 0.5);
+      // Sort pinned items strictly by the order in PINNED_IDS
+      pinned.sort((a, b) => {
+          const idA = a.slug || a.id;
+          const idB = b.slug || b.id;
+          return PINNED_IDS.indexOf(idA) - PINNED_IDS.indexOf(idB);
+      });
 
-      // Create a mixed feed: 2 High, 1 Medium, Repeat
-      const mixedFeed = [];
-      const h = shuffle([...highPriority]);
-      const m = shuffle([...mediumPriority]);
-      
-      while(h.length > 0 || m.length > 0) {
-          if (h.length > 0) mixedFeed.push(h.pop());
-          if (h.length > 0) mixedFeed.push(h.pop());
-          if (m.length > 0) mixedFeed.push(m.pop());
-      }
+      // Shuffle the rest for discovery
+      const shuffledOthers = others.sort(() => Math.random() - 0.5);
 
-      return [...mixedFeed, ...lowPriority];
+      return [...pinned, ...shuffledOthers];
   }, [menuItems]);
   // -----------------------
 
@@ -127,10 +301,10 @@ export const MenuScreen: React.FC = () => {
 
   const handleStoriesScroll = (e: React.UIEvent<HTMLDivElement>) => {
       const container = e.currentTarget;
+      const itemWidth = 80; 
       const scrollLeft = container.scrollLeft;
-      const itemWidth = 80; // approximate width of story item + margin
       const index = Math.round(scrollLeft / itemWidth);
-      setActiveStoryIndex(Math.min(STORIES.length, Math.max(0, index)));
+      setActiveStoryIndex(Math.min(stories.length, Math.max(0, index)));
   };
 
   if (isLoading) {
@@ -188,7 +362,7 @@ export const MenuScreen: React.FC = () => {
         <div className="relative pt-6 pb-2">
             {/* Dots Indicator */}
             <div className="flex justify-center gap-1.5 mb-2">
-                {STORIES.map((_, idx) => (
+                {stories.map((_, idx) => (
                     <div 
                         key={idx} 
                         className={`h-1.5 rounded-full transition-all duration-300 ${activeStoryIndex === idx ? 'w-4 bg-primary' : 'w-1.5 bg-gray-300'}`}
@@ -201,7 +375,7 @@ export const MenuScreen: React.FC = () => {
                 onScroll={handleStoriesScroll}
                 className="flex space-x-6 px-5 py-2 overflow-x-auto no-scrollbar w-full items-start snap-x"
             >
-                {STORIES.map((story) => (
+                {stories.map((story) => (
                     <div key={story.id} onClick={() => openStory(story)} className="flex flex-col items-center flex-shrink-0 space-y-2 cursor-pointer group w-[72px] snap-center">
                         <div className={`w-[72px] h-[72px] rounded-full p-[2px] border ${story.colorRing.includes('gold') ? 'border-primary' : 'border-primary/30'} transition-all group-hover:scale-105`}>
                             <div className="w-full h-full rounded-full border-2 border-background-light overflow-hidden">
@@ -212,33 +386,28 @@ export const MenuScreen: React.FC = () => {
                     </div>
                 ))}
                 
-                 {/* --- FEATURED EVENTS BUTTON (Updated) --- */}
+                 {/* Featured Events */}
                  <div 
                     onClick={() => setActiveTab('events')} 
                     className="flex flex-col items-center flex-shrink-0 space-y-2 cursor-pointer w-[72px] snap-center group relative z-10"
                  >
                     <div className="w-[72px] h-[72px] rounded-full p-[2px] border-2 border-primary/80 relative transition-transform duration-300 group-hover:scale-110">
-                        {/* Glow Effect */}
                         <div className="absolute inset-0 rounded-full bg-primary/20 blur-md animate-pulse"></div>
-                        
                         <div className="w-full h-full rounded-full bg-gradient-to-br from-primary via-[#D4AF37] to-[#B8860B] flex items-center justify-center relative z-10 shadow-inner">
                             <span className="material-icons-round text-white text-3xl drop-shadow-md">calendar_month</span>
                         </div>
-                        
-                        {/* "New" Badge */}
                         <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full border border-white z-20">
                             NEW
                         </div>
                     </div>
                     <span className="text-[9px] uppercase tracking-wider font-bold text-primary drop-shadow-sm group-hover:text-[#A08040] transition-colors">Афиша</span>
                 </div>
-
             </section>
         </div>
 
         {/* 3. Collections */}
         <section className="flex space-x-4 px-5 py-2 overflow-x-auto no-scrollbar w-full">
-            {COLLECTIONS.map((col) => (
+            {collections.map((col) => (
                 <div key={col.id} onClick={() => openCollection(col)} className="relative w-64 h-36 flex-shrink-0 rounded-xl overflow-hidden shadow-lg group cursor-pointer">
                     <img alt={col.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src={col.imageUrl} />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
@@ -250,7 +419,7 @@ export const MenuScreen: React.FC = () => {
             ))}
         </section>
 
-        {/* 4. Zigzag Divider (UPDATED HEIGHT) */}
+        {/* 4. Zigzag Divider */}
         <div className="w-full h-10 restaurant-wall mt-6 mb-2"></div>
 
         {/* 5. Category Tabs (Sticky) */}
@@ -279,38 +448,26 @@ export const MenuScreen: React.FC = () => {
             </nav>
         </div>
 
-        {/* 6. Product List */}
+        {/* 6. Product List (Updated with Swipeable Grid Items) */}
         <div className="px-5 py-6 bg-background-light min-h-[50vh]">
             {categories.map(category => {
                 const categoryItems = menuItems.filter(item => item.categoryId === category.id);
                 if (categoryItems.length === 0) return null;
 
                 return (
-                    <section key={category.id} id={`cat-${category.id}`} className="mb-12">
+                    <section key={category.id} id={`cat-${category.id}`} className="mb-4">
                         <div className="flex items-center gap-4 mb-6">
                             <h2 className="text-lg font-logo font-bold uppercase tracking-widest text-text-main">{category.name}</h2>
                             <div className="h-[1px] flex-1 bg-black/5"></div>
                         </div>
                         
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-8">
+                        <div className="grid grid-cols-2 gap-x-4">
                             {categoryItems.map((item) => (
-                                <div key={item.id} onClick={() => openProduct(item)} className="group cursor-pointer">
-                                    <div className="relative rounded-xl overflow-hidden aspect-[3/4] mb-4 bg-gray-100">
-                                        <img 
-                                            alt={item.name} 
-                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
-                                            src={item.imageUrl} 
-                                            loading="lazy"
-                                        />
-                                        <div className="absolute top-0 right-0 p-2">
-                                            <div className="bg-anthracite/90 backdrop-blur px-2 py-1 rounded-md shadow-sm border border-white/10">
-                                                <span className="text-xs font-bold text-primary tabular-nums">{item.price}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <h3 className="font-bold text-[11px] uppercase tracking-wide leading-tight mb-2 text-text-main">{item.name}</h3>
-                                    <p className="text-[10px] text-text-main/60 leading-relaxed font-sans line-clamp-2">{item.description}</p>
-                                </div>
+                                <MenuGridItem 
+                                    key={item.id} 
+                                    item={item} 
+                                    onClick={() => openProduct(item)} 
+                                />
                             ))}
                         </div>
                     </section>
@@ -319,73 +476,17 @@ export const MenuScreen: React.FC = () => {
         </div>
       </div>
       ) : (
-        /* Mood View */
+        /* Mood View (FIXED: Extracted Component) */
         <div className="flex-1 h-full overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar bg-black pb-0">
-            {vibeFeedItems.slice(0, 20).map((item, index) => (
-                <div key={item.id} className="w-full h-full snap-start relative shrink-0">
-                    {item.videoUrl ? (
-                         <div className="w-full h-full relative">
-                            <video 
-                                src={item.videoUrl} 
-                                className="w-full h-full object-cover" 
-                                autoPlay 
-                                muted={isMuted} 
-                                loop 
-                                playsInline 
-                            />
-                            {/* Mute Toggle */}
-                            <button 
-                                onClick={(e) => { e.stopPropagation(); setIsMuted(!isMuted); }}
-                                className="absolute top-24 right-4 z-20 w-10 h-10 bg-black/40 backdrop-blur rounded-full flex items-center justify-center text-white/80 hover:bg-black/60 transition"
-                            >
-                                <span className="material-icons-round text-xl">
-                                    {isMuted ? 'volume_off' : 'volume_up'}
-                                </span>
-                            </button>
-                         </div>
-                    ) : (
-                        <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
-                    )}
-                    
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/90 pointer-events-none"></div>
-
-                    <div className="absolute bottom-24 left-0 w-full px-6 text-white pb-6 z-10">
-                        <div className="flex justify-between items-end mb-4">
-                             <div className="flex-1 pr-4">
-                                <div className="flex gap-2 mb-2">
-                                    {item.badges.length > 0 && (
-                                        <span className="inline-block bg-primary/90 text-anthracite text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-sm">
-                                            {item.badges[0]}
-                                        </span>
-                                    )}
-                                    {item.abv && (
-                                        <span className="inline-block bg-white/20 backdrop-blur text-white text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-sm">
-                                            ABV {item.abv}%
-                                        </span>
-                                    )}
-                                </div>
-                                <h2 className="text-3xl font-logo font-bold uppercase tracking-wider mb-2 leading-none drop-shadow-md">{item.name}</h2>
-                                <p className="text-sm text-white/80 line-clamp-3 font-light leading-relaxed">{item.description}</p>
-                             </div>
-                             <div className="text-3xl font-bold text-primary font-mono whitespace-nowrap">{item.price} ₽</div>
-                        </div>
-                        
-                        <div className="mt-6 flex gap-3">
-                            <button 
-                                onClick={() => openProduct(item)}
-                                className="flex-1 bg-white/10 backdrop-blur-md border border-white/20 text-white font-bold text-xs uppercase tracking-widest py-4 rounded-xl hover:bg-white/20 transition-colors"
-                            >
-                                Подробнее
-                            </button>
-                             <button 
-                                onClick={() => addToOrder({ dishId: item.id, quantity: 1 })}
-                                className="w-14 h-14 bg-primary text-anthracite rounded-xl flex items-center justify-center hover:scale-105 transition-transform shadow-lg shadow-primary/30"
-                            >
-                                <span className="material-icons-round text-2xl">add</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
+            {vibeFeedItems.slice(0, 20).map((item) => (
+                <VibeFeedItem 
+                    key={item.id}
+                    item={item}
+                    isMuted={isMuted}
+                    toggleMute={() => setIsMuted(!isMuted)}
+                    onOpen={() => openProduct(item)}
+                    onAdd={() => addToOrder({ dishId: item.id, quantity: 1 })}
+                />
             ))}
         </div>
       )}

@@ -1,83 +1,117 @@
-
-import React from 'react';
+import React, { Suspense, ErrorInfo, ReactNode } from 'react';
 import { GameProvider, useGameStore } from './store/GameContext';
 import { BottomNav } from './components/Layout/BottomNav';
-import { TableScreen } from './components/Screens/TableScreen';
-import { MenuScreen } from './components/Screens/MenuScreen';
-import { BillScreen } from './components/Screens/BillScreen';
-import { GamesScreen } from './components/Screens/GamesScreen';
-import { ProfileScreen } from './components/Screens/ProfileScreen';
-import { AdminScreen } from './components/Screens/AdminScreen';
-import { SettingsScreen } from './components/Screens/SettingsScreen';
-import { DebugScreen } from './components/Debug/DebugScreen';
-import { AuthScreen } from './components/Screens/AuthScreen';
-import { EventsScreen } from './components/Screens/EventsScreen';
+import { BurgerMenu } from './components/Layout/BurgerMenu';
 import { ProductSheet } from './components/Modals/ProductSheet';
 import { StoryViewer } from './components/Modals/StoryViewer';
 import { CollectionSelector } from './components/Modals/CollectionSelector';
-import { BurgerMenu } from './components/Layout/BurgerMenu';
-import { AnimatePresence, motion } from 'framer-motion';
+
+// Lazy Loading Screens
+const TableScreen = React.lazy(() => import('./components/Screens/TableScreen').then(m => ({ default: m.TableScreen })));
+const MenuScreen = React.lazy(() => import('./components/Screens/MenuScreen').then(m => ({ default: m.MenuScreen })));
+const BillScreen = React.lazy(() => import('./components/Screens/BillScreen').then(m => ({ default: m.BillScreen })));
+const GamesScreen = React.lazy(() => import('./components/Screens/GamesScreen').then(m => ({ default: m.GamesScreen })));
+const ProfileScreen = React.lazy(() => import('./components/Screens/ProfileScreen').then(m => ({ default: m.ProfileScreen })));
+const EventsScreen = React.lazy(() => import('./components/Screens/EventsScreen').then(m => ({ default: m.EventsScreen })));
+const AdminScreen = React.lazy(() => import('./components/Screens/AdminScreen').then(m => ({ default: m.AdminScreen })));
+const SettingsScreen = React.lazy(() => import('./components/Screens/SettingsScreen').then(m => ({ default: m.SettingsScreen })));
+const AuthScreen = React.lazy(() => import('./components/Screens/AuthScreen').then(m => ({ default: m.AuthScreen })));
+const DebugScreen = React.lazy(() => import('./components/Debug/DebugScreen').then(m => ({ default: m.DebugScreen })));
+
+interface ErrorBoundaryProps {
+  children?: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+// Error Boundary to catch crashes
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  public state: ErrorBoundaryState = {
+    hasError: false,
+    error: null
+  };
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error("Uncaught error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center h-screen bg-red-50 text-red-900 p-6 text-center">
+          <h1 className="text-xl font-bold mb-2">Что-то пошло не так</h1>
+          <p className="text-sm mb-4">Приложение столкнулось с критической ошибкой.</p>
+          <pre className="text-xs bg-red-100 p-2 rounded w-full overflow-auto text-left mb-4">
+            {this.state.error?.toString()}
+          </pre>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-red-600 text-white rounded font-bold uppercase text-xs"
+          >
+            Перезагрузить
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+const LoadingScreen = () => (
+  <div className="flex items-center justify-center h-full w-full bg-white text-black">
+    <div className="flex flex-col items-center gap-4">
+        <div className="w-8 h-8 border-4 border-[#C5A059] border-t-transparent rounded-full animate-spin"></div>
+        <span className="text-xs font-bold uppercase tracking-widest opacity-50">Загрузка...</span>
+    </div>
+  </div>
+);
 
 const ScreenRenderer: React.FC = () => {
   const { activeTab } = useGameStore();
 
-  const renderScreen = () => {
-    switch (activeTab) {
-      case 'table': return <TableScreen />;
-      case 'menu': return <MenuScreen />;
-      case 'bill': return <BillScreen />;
-      case 'games': return <GamesScreen />;
-      case 'profile': return <ProfileScreen />;
-      case 'admin': return <AdminScreen />;
-      case 'auth': return <AuthScreen />;
-      case 'settings': return <SettingsScreen />;
-      case 'debug': return <DebugScreen />;
-      case 'events': return <EventsScreen />;
-      default: return <TableScreen />;
-    }
-  };
-
-  return (
-    <div className="flex-1 w-full h-full overflow-hidden bg-background-light dark:bg-background-dark">
-      <AnimatePresence mode="wait">
-        <motion.div 
-          key={activeTab}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.2 }}
-          className="w-full h-full"
-        >
-          {renderScreen()}
-        </motion.div>
-      </AnimatePresence>
-    </div>
-  );
+  switch (activeTab) {
+    case 'table': return <TableScreen />;
+    case 'menu': return <MenuScreen />;
+    case 'bill': return <BillScreen />;
+    case 'games': return <GamesScreen />;
+    case 'profile': return <ProfileScreen />;
+    case 'events': return <EventsScreen />;
+    case 'admin': return <AdminScreen />;
+    case 'settings': return <SettingsScreen />;
+    case 'auth': return <AuthScreen />;
+    case 'debug': return <DebugScreen />;
+    default: return <TableScreen />;
+  }
 };
 
 const App: React.FC = () => {
-  // Logic to determine if global nav should be shown
-  const NavWrapper = () => {
-      const { activeTab } = useGameStore();
-      // Hide bottom nav for Events as well to give it full screen focus (similar to Admin/Auth)
-      // or keep it. Let's hide it for Events to match the "modal-like" feel of Story transition.
-      const hideNavTabs = ['admin', 'auth', 'debug', 'events'];
-      
-      if (hideNavTabs.includes(activeTab)) return null;
-      return <BottomNav />;
-  };
-
   return (
-    <GameProvider>
-      <div className="flex flex-col h-[100dvh] w-full max-w-md mx-auto bg-background-light dark:bg-background-dark shadow-2xl overflow-hidden relative">
-        <ScreenRenderer />
-        <NavWrapper />
-        <BurgerMenu />
-        <ProductSheet />
-        <StoryViewer />
-        <CollectionSelector />
-      </div>
-    </GameProvider>
+    <ErrorBoundary>
+      <GameProvider>
+        <div className="flex flex-col h-[100dvh] w-full max-w-md mx-auto bg-white shadow-2xl overflow-hidden relative">
+          <Suspense fallback={<LoadingScreen />}>
+            <ScreenRenderer />
+          </Suspense>
+          
+          {/* Global UI Elements */}
+          <BottomNav />
+          <BurgerMenu />
+          
+          {/* Modals */}
+          <ProductSheet />
+          <StoryViewer />
+          <CollectionSelector />
+        </div>
+      </GameProvider>
+    </ErrorBoundary>
   );
 };
 

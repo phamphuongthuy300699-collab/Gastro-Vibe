@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import { useGameStore } from '../../store/GameContext';
 import { supabase } from '../../lib/supabase';
 
@@ -9,10 +10,6 @@ export const AuthScreen: React.FC = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-
-  useEffect(() => {
-    console.log("AuthScreen Mounted");
-  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +48,7 @@ export const AuthScreen: React.FC = () => {
             <span className="material-icons-round text-3xl">close</span>
         </button>
 
-        <div className="flex-1 flex flex-col justify-center max-w-xs mx-auto w-full z-10">
+        <div className="flex-1 flex flex-col justify-center max-w-xs mx-auto w-full">
             <div className="mb-8 text-center">
                  <span className="material-icons-round text-5xl text-gold mb-4">admin_panel_settings</span>
                  <h2 className="font-logo font-bold text-xl uppercase tracking-widest">Администратор</h2>
@@ -99,7 +96,7 @@ export const AuthScreen: React.FC = () => {
             </form>
             
             <p className="text-center text-[10px] text-white/20 mt-8">
-                Нет аккаунта? Создайте его в Supabase Dashboard &rarr; Authentication.
+                Нет аккаунта? Создайте его в Supabase Dashboard > Authentication.
             </p>
         </div>
     </div>

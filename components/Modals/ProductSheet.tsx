@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '../../store/GameContext';
 import { DishVariant, DishModifier } from '../../types';
@@ -19,6 +18,9 @@ export const ProductSheet: React.FC = () => {
 
   // Visual feedback state for quick add buttons
   const [addedFeedbackIds, setAddedFeedbackIds] = useState<Set<string>>(new Set());
+
+  // Ref for robust video playing
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   // --- HARDENED LOGIC START ---
   const localDef = selectedDish ? DEFAULT_MENU_ITEMS.find(i => i.id === (selectedDish.slug || selectedDish.id)) : null;
@@ -62,6 +64,14 @@ export const ProductSheet: React.FC = () => {
              // For now, default 0 modifiers selected is safer unless "Required" is implemented
         }
     }
+  }, [selectedDish]);
+
+  // Video Autoplay fix for iOS
+  useEffect(() => {
+      if (selectedDish?.videoUrl && videoRef.current) {
+          videoRef.current.defaultMuted = true;
+          videoRef.current.muted = true;
+      }
   }, [selectedDish]);
 
   if (!selectedDish) return null;
@@ -204,8 +214,12 @@ export const ProductSheet: React.FC = () => {
             <div className="relative h-[35vh] min-h-[250px] w-full shrink-0 bg-anthracite">
                 {selectedDish.videoUrl ? (
                     <video 
+                        ref={videoRef}
                         src={selectedDish.videoUrl} 
-                        autoPlay muted loop playsInline 
+                        autoPlay 
+                        muted 
+                        loop 
+                        playsInline 
                         className="w-full h-full object-cover opacity-90"
                     />
                 ) : (

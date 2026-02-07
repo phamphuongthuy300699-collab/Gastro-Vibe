@@ -1,11 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '../../store/GameContext';
-import { STORIES } from '../../constants';
 
 export const StoryViewer: React.FC = () => {
-  const { activeStory, openStory, openProduct, menuItems } = useGameStore();
+  const { activeStory, openStory, openProduct, menuItems, stories } = useGameStore(); // Added stories for nav
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
@@ -23,9 +21,9 @@ export const StoryViewer: React.FC = () => {
           setCurrentIndex(prev => prev + 1);
       } else {
           // Check for next story
-          const currentStoryIndex = STORIES.findIndex(s => s.id === activeStory.id);
-          if (currentStoryIndex !== -1 && currentStoryIndex < STORIES.length - 1) {
-              openStory(STORIES[currentStoryIndex + 1]);
+          const currentStoryIndex = stories.findIndex(s => s.id === activeStory.id);
+          if (currentStoryIndex !== -1 && currentStoryIndex < stories.length - 1) {
+              openStory(stories[currentStoryIndex + 1]);
           } else {
               openStory(null);
           }
@@ -49,11 +47,13 @@ export const StoryViewer: React.FC = () => {
     }, 5000);
 
     return () => clearInterval(timer);
-  }, [currentIndex, activeStory, openStory]);
+  }, [currentIndex, activeStory, openStory, stories]);
 
   if (!activeStory) return null;
 
+  // Safe fallback if slides are missing
   const currentSlide = activeStory.slides[currentIndex];
+  if (!currentSlide) return null;
 
   const handleTap = (e: React.MouseEvent) => {
       const width = window.innerWidth;
@@ -116,7 +116,7 @@ export const StoryViewer: React.FC = () => {
                  <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80"></div>
 
                  <div className="absolute bottom-12 left-0 w-full p-6 pb-safe-area-bottom">
-                     <h2 className="text-white font-serif text-3xl italic mb-2 drop-shadow-lg">{currentSlide.title}</h2>
+                     <h2 className="text-white font-serif text-3xl italic mb-2 drop-shadow-lg whitespace-pre-line">{currentSlide.title}</h2>
                      <p className="text-white/80 text-sm font-sans mb-6">{currentSlide.subtitle}</p>
 
                      {currentSlide.dishId && (

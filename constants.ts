@@ -1,4 +1,3 @@
-
 import { Dish, Participant, TableSession, Visit, Story, CollectionSet, Game, UserProfile, AdminTable, KitchenTicket, Wall, WaiterNotification, Category, RestaurantEvent } from './types';
 import { SEED_DATA } from './data/seedData';
 
@@ -41,9 +40,21 @@ export const PARTICIPANTS: Participant[] = [
   }
 ];
 
+// --- VIDEO MAPPING ---
+// Explicitly mapping high-quality vertical videos to specific IDs
+const VIDEO_MAP: Record<string, string> = {
+    'stk_ribeye': 'https://cdn.coverr.co/videos/coverr-steak-on-the-grill-2453/1080p.mp4',
+    'cof_cap': 'https://cdn.coverr.co/videos/coverr-pouring-latte-art-5458/1080p.mp4', 
+    'soup_mushroom': 'https://cdn.coverr.co/videos/coverr-cooking-soup-4673/1080p.mp4',
+    'pst_orzo': 'https://cdn.coverr.co/videos/coverr-tossing-pasta-in-pan-2872/1080p.mp4',
+    // Extra fallback videos for variety
+    'piz_pep': 'https://cdn.coverr.co/videos/coverr-making-pizza-4521/1080p.mp4',
+    'des_basque': 'https://cdn.coverr.co/videos/coverr-baking-cheesecake-5567/1080p.mp4'
+};
+
 // --- MENU ITEMS ---
 // Flatten the SEED_DATA to create a searchable list of items for the mock
-// Updated to provide defaults for all array fields
+// Updated to provide defaults for all array fields and ensure SLUG matches ID
 export const DEFAULT_MENU_ITEMS: Dish[] = SEED_DATA.flatMap(category => 
     category.items.map(item => ({
         modifiers: [],
@@ -52,7 +63,10 @@ export const DEFAULT_MENU_ITEMS: Dish[] = SEED_DATA.flatMap(category =>
         badges: [],
         relatedItemIds: [],
         ...item,
-        categoryId: category.id // Ensure category link
+        slug: item.id, // Explicitly set slug to match ID for fallback data
+        categoryId: category.id, // Ensure category link
+        // Use existing video if present, otherwise fallback to map
+        videoUrl: item.videoUrl || ((item.id && VIDEO_MAP[item.id]) ? VIDEO_MAP[item.id] : undefined)
     } as Dish))
 );
 

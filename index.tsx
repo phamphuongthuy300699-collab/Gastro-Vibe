@@ -1,74 +1,40 @@
-import React, { Component, ReactNode } from 'react';
-import ReactDOM from 'react-dom/client';
+import React from 'react';
+import { createRoot } from 'react-dom/client';
 import App from './App';
 
-// Simple Error Boundary to catch crashers
-interface ErrorBoundaryProps {
-  children?: ReactNode;
-}
-
-interface ErrorBoundaryState {
-  hasError: boolean;
-  error: any;
-}
-
-class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  public state: ErrorBoundaryState = { hasError: false, error: null };
-  
-  // Explicitly declare props to satisfy TypeScript if Component inference fails
-  props: ErrorBoundaryProps;
-
-  constructor(props: ErrorBoundaryProps) {
-    super(props);
-    this.props = props;
-  }
-
-  static getDerivedStateFromError(error: any): ErrorBoundaryState {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: any, errorInfo: any) {
-    console.error("Uncaught error:", error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="flex flex-col items-center justify-center h-screen bg-gray-100 p-6 text-center font-sans">
-          <div className="bg-white p-6 rounded-2xl shadow-xl max-w-sm">
-            <span className="text-4xl mb-4 block">😵</span>
-            <h1 className="text-xl font-bold text-red-600 mb-2">Что-то пошло не так</h1>
-            <p className="text-sm text-gray-500 mb-4">Приложение столкнулось с критической ошибкой.</p>
-            <div className="bg-gray-100 p-3 rounded text-left overflow-auto max-h-40 mb-4">
-                <code className="text-[10px] text-red-500 font-mono block">
-                    {this.state.error?.toString()}
-                </code>
-            </div>
-            <button 
-                onClick={() => window.location.reload()} 
-                className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl uppercase tracking-wider text-xs"
-            >
-                Перезагрузить
-            </button>
-          </div>
+// --- SYSTEM SAFETY NET ---
+// Если приложение упадет до загрузки React, мы увидим ошибку
+window.onerror = function(message, source, lineno, colno, error) {
+  const root = document.getElementById('root');
+  if (root) {
+    root.innerHTML = `
+      <div style="background:#1a1a1b; color:#C5A059; height:100%; padding:20px; font-family:monospace; display:flex; flex-direction:column; justify-content:center;">
+        <h1 style="font-size:24px; margin-bottom:10px;">⚠️ APP CRASHED</h1>
+        <p style="color:white; margin-bottom:20px;">Startup failed.</p>
+        <div style="background:rgba(255,0,0,0.1); border:1px solid #ef4444; padding:15px; border-radius:8px; color:#fca5a5; overflow:auto;">
+           <strong>Error:</strong> ${message}<br/>
+           <small>${source}:${lineno}</small>
         </div>
-      );
-    }
-
-    return this.props.children;
+        <button onclick="window.location.reload()" style="margin-top:20px; padding:15px; background:#C5A059; border:none; color:black; font-weight:bold; cursor:pointer;">RELOAD</button>
+      </div>
+    `;
   }
-}
+};
 
 const rootElement = document.getElementById('root');
-if (!rootElement) {
-  throw new Error("Could not find root element to mount to");
-}
 
-const root = ReactDOM.createRoot(rootElement);
-root.render(
-  <React.StrictMode>
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
-  </React.StrictMode>
-);
+if (rootElement) {
+  try {
+    const root = createRoot(rootElement);
+    root.render(
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>
+    );
+  } catch (e) {
+    console.error("React Mount Error:", e);
+    throw e;
+  }
+} else {
+  console.error("Root element not found");
+}

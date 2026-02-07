@@ -17,6 +17,8 @@ interface GameContextType {
   visits: Visit[];
   menuItems: Dish[];
   categories: Category[];
+  stories: Story[]; // New
+  collections: CollectionSet[]; // New
   favorites: Set<string>;
   
   // Orders
