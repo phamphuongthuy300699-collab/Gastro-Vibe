@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '../../store/GameContext';
@@ -25,7 +26,6 @@ export const CollectionSelector: React.FC = () => {
   if (!activeCollection) return null;
 
   // Helper to find a dish by either its Real ID (UUID) or its Slug (Text ID)
-  // This bridges the gap between the Collection data (Text) and Menu data (UUID)
   const findDish = (identifier: string): Dish | undefined => {
       return menuItems.find(d => d.id === identifier || d.slug === identifier);
   };
@@ -44,8 +44,27 @@ export const CollectionSelector: React.FC = () => {
       openCollection(null);
   };
 
+  // CORRECTED MATH: Calculate base price + deltas for upgrades
   const calculateTotalPrice = () => {
-     return activeCollection.price * quantity;
+     let unitPrice = activeCollection.price;
+
+     activeCollection.courses.forEach((course, index) => {
+         const selectedId = selections[index];
+         
+         // Only calculate delta if selection changed from default
+         if (selectedId !== course.defaultDishId) {
+             const defaultDish = findDish(course.defaultDishId);
+             const selectedDish = findDish(selectedId);
+
+             // If both exist, add the difference. 
+             // Example: Default 300, Selected 500 -> Delta +200. Total = Base + 200.
+             if (defaultDish && selectedDish) {
+                 unitPrice += (selectedDish.price - defaultDish.price);
+             }
+         }
+     });
+
+     return unitPrice * quantity;
   };
 
   return (
@@ -95,6 +114,9 @@ export const CollectionSelector: React.FC = () => {
                          const selectedDishId = selections[index];
                          const selectedDish = findDish(selectedDishId);
                          
+                         // Combine default + options into one list for swapping so user can go back to default
+                         const availableOptions = Array.from(new Set([course.defaultDishId, ...course.options]));
+
                          // Fallback UI if dish is missing in DB
                          if (!selectedDish) {
                              return (
@@ -112,13 +134,13 @@ export const CollectionSelector: React.FC = () => {
                              <div key={index} className="bg-white border border-[#F0EAE5] rounded-xl p-4 shadow-sm relative overflow-hidden transition-all hover:shadow-md">
                                  <div className="flex justify-between items-center mb-4">
                                      <span className="text-[10px] font-bold text-text-main/40 uppercase tracking-widest">{course.courseName}</span>
-                                     {course.options.length > 1 && (
+                                     {availableOptions.length > 1 && (
                                          <button 
-                                            onClick={() => setSwappingCourseIndex(index)}
-                                            className="text-[10px] text-primary font-bold uppercase tracking-wider flex items-center gap-1 hover:bg-primary/5 px-2 py-1 rounded transition-colors"
+                                            onClick={() => setSwappingCourseIndex(swappingCourseIndex === index ? null : index)}
+                                            className={`text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 px-2 py-1 rounded transition-colors ${swappingCourseIndex === index ? 'text-primary bg-primary/10' : 'text-primary hover:bg-primary/5'}`}
                                          >
                                              <span className="material-icons-round text-[14px]">swap_horiz</span>
-                                             Заменить
+                                             {swappingCourseIndex === index ? 'Скрыть' : 'Заменить'}
                                          </button>
                                      )}
                                  </div>
@@ -142,17 +164,34 @@ export const CollectionSelector: React.FC = () => {
                                          >
                                              <p className="text-[10px] text-text-main/40 uppercase tracking-wider mb-3 font-bold">Выберите вариант:</p>
                                              <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
-                                                 {course.options.map(optId => {
+                                                 {availableOptions.map(optId => {
                                                      const optDish = findDish(optId);
                                                      if (!optDish) return null;
                                                      const isSelected = selectedDishId === optId;
+                                                     
+                                                     // Price Delta Logic
+                                                     const defaultDish = findDish(course.defaultDishId);
+                                                     let priceBadge = null;
+                                                     if (defaultDish) {
+                                                         const delta = optDish.price - defaultDish.price;
+                                                         if (delta > 0) priceBadge = `+${delta} ₽`;
+                                                         // We can optionally show negative deltas if needed
+                                                         // else if (delta < 0) priceBadge = `${delta} ₽`;
+                                                     }
+
                                                      return (
                                                          <div 
                                                             key={optId} 
                                                             onClick={() => handleSwap(index, optId)}
-                                                            className={`shrink-0 w-32 cursor-pointer rounded-xl border-2 transition-all overflow-hidden ${isSelected ? 'border-primary shadow-md scale-[1.02]' : 'border-transparent bg-gray-50 hover:bg-gray-100'}`}
+                                                            className={`shrink-0 w-32 cursor-pointer rounded-xl border-2 transition-all overflow-hidden relative group ${isSelected ? 'border-primary shadow-md scale-[1.02]' : 'border-transparent bg-gray-50 hover:bg-gray-100'}`}
                                                          >
-                                                             <div className="h-24 w-full bg-cover bg-center" style={{ backgroundImage: `url('${optDish.imageUrl}')` }}></div>
+                                                             <div className="h-24 w-full bg-cover bg-center relative" style={{ backgroundImage: `url('${optDish.imageUrl}')` }}>
+                                                                 {priceBadge && (
+                                                                     <div className="absolute top-1 right-1 bg-black/70 backdrop-blur-sm text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm">
+                                                                         {priceBadge}
+                                                                     </div>
+                                                                 )}
+                                                             </div>
                                                              <div className={`p-3 ${isSelected ? 'bg-primary text-white' : 'bg-transparent text-text-main'}`}>
                                                                  <p className="text-[10px] font-bold leading-tight line-clamp-2">{optDish.name}</p>
                                                              </div>
@@ -194,7 +233,7 @@ export const CollectionSelector: React.FC = () => {
                         className="flex-1 bg-text-main text-white hover:bg-primary transition-all duration-300 font-bold text-sm uppercase tracking-[0.15em] h-14 rounded-xl flex items-center justify-between px-6 shadow-lg active:scale-[0.98]"
                      >
                          <span>В корзину</span>
-                         <span className="font-serif italic text-xl">{calculateTotalPrice()} ₽</span>
+                         <span className="font-serif italic text-xl">{calculateTotalPrice().toLocaleString()} ₽</span>
                      </button>
                  </div>
              </div>

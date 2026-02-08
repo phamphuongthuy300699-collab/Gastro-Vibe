@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useGameStore } from '../../store/GameContext';
 import { Dish } from '../../types';
@@ -212,33 +213,23 @@ export const MenuScreen: React.FC = () => {
 
   // --- VIBE FEED LOGIC (UPDATED SORTING) ---
   const vibeFeedItems = useMemo(() => {
-      // 1. Defined Priority List (IDs or Slugs)
-      const PINNED_IDS = ['stk_ribeye', 'cof_cap', 'soup_mushroom', 'pst_orzo'];
-      
-      const pinned: any[] = [];
-      const others: any[] = [];
+      const withVideo: any[] = [];
+      const withoutVideo: any[] = [];
 
       menuItems.forEach(item => {
-          // Check both ID and Slug for robustness
-          const id = item.slug || item.id;
-          if (PINNED_IDS.includes(id)) {
-              pinned.push(item);
+          if (item.videoUrl) {
+              withVideo.push(item);
           } else {
-              others.push(item);
+              withoutVideo.push(item);
           }
       });
 
-      // Sort pinned items strictly by the order in PINNED_IDS
-      pinned.sort((a, b) => {
-          const idA = a.slug || a.id;
-          const idB = b.slug || b.id;
-          return PINNED_IDS.indexOf(idA) - PINNED_IDS.indexOf(idB);
-      });
+      // Shuffle both lists for discovery so it's not static
+      const shuffledWithVideo = withVideo.sort(() => Math.random() - 0.5);
+      const shuffledWithoutVideo = withoutVideo.sort(() => Math.random() - 0.5);
 
-      // Shuffle the rest for discovery
-      const shuffledOthers = others.sort(() => Math.random() - 0.5);
-
-      return [...pinned, ...shuffledOthers];
+      // Prioritize items with video
+      return [...shuffledWithVideo, ...shuffledWithoutVideo];
   }, [menuItems]);
   // -----------------------
 
