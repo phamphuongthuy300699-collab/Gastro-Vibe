@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '../../store/GameContext';
@@ -15,6 +16,9 @@ export const ProductSheet: React.FC = () => {
   // New: Drink specific states
   const [selectedVariant, setSelectedVariant] = useState<DishVariant | null>(null);
   const [showMacros, setShowMacros] = useState(false);
+
+  // New: Local state for Cross-Sells (Pending additions)
+  const [pendingRelated, setPendingRelated] = useState<Record<string, number>>({});
 
   // Visual feedback state for quick add buttons
   const [addedFeedbackIds, setAddedFeedbackIds] = useState<Set<string>>(new Set());
@@ -43,6 +47,7 @@ export const ProductSheet: React.FC = () => {
         setExcludedIngredients(new Set());
         setShowMacros(false);
         setAddedFeedbackIds(new Set());
+        setPendingRelated({}); // Reset pending cross-sells
         
         // Auto-select first variant if available
         if (effectiveVariants.length > 0) {
@@ -58,10 +63,8 @@ export const ProductSheet: React.FC = () => {
                  // Determine groups
                  if (mod.isSingleSelect && mod.group) {
                      // If we haven't selected for this group yet, select the first one we find
-                     // (This is a naive implementation, ideally we check against a "Group" list)
                  }
              });
-             // For now, default 0 modifiers selected is safer unless "Required" is implemented
         }
     }
   }, [selectedDish]);
@@ -83,7 +86,6 @@ export const ProductSheet: React.FC = () => {
     
     if (mod.isSingleSelect && mod.group) {
         // Remove other modifiers in the same group from the set
-        // Added safe check (?.) to prevent crash if modifiers is undefined
         selectedDish.modifiers?.forEach(m => {
             if (m.group === mod.group && m.id !== mod.id) {
                 next.delete(m.id);
@@ -107,32 +109,65 @@ export const ProductSheet: React.FC = () => {
     setExcludedIngredients(next);
   };
 
+  // Calculates Price of Main Dish + Modifiers + Pending Cross Sells
   const calculateTotal = () => {
-    let price = selectedVariant ? selectedVariant.price : selectedDish.price;
-    // Added safe check (?.) to prevent crash if modifiers is undefined
+    // 1. Main Dish Cost
+    let mainPrice = selectedVariant ? selectedVariant.price : selectedDish.price;
     selectedDish.modifiers?.forEach(mod => {
         if (modifiers.has(mod.id)) {
-            price += mod.priceDelta;
+            mainPrice += mod.priceDelta;
         }
     });
-    return price * quantity;
+    let total = mainPrice * quantity;
+
+    // 2. Pending Related Items Cost
+    Object.entries(pendingRelated).forEach(([relatedId, count]) => {
+        const relatedItem = menuItems.find(i => i.id === relatedId);
+        if (relatedItem) {
+            total += relatedItem.price * count;
+        }
+    });
+
+    return total;
   };
 
   const handleAdd = () => {
+    // 1. Add Main Dish
     addToOrder({
         dishId: selectedDish.id,
         quantity,
-        priceAtOrder: calculateTotal() / quantity,
+        priceAtOrder: (selectedVariant ? selectedVariant.price : selectedDish.price) + 
+                      (Array.from(modifiers).reduce((acc, modId) => {
+                          const m = selectedDish.modifiers?.find(x => x.id === modId);
+                          return acc + (m?.priceDelta || 0);
+                      }, 0)),
         selectedModifiers: Array.from(modifiers),
         excludedIngredients: Array.from(excludedIngredients),
         selectedVariantId: selectedVariant?.id
     });
+
+    // 2. Add Pending Related Items (Default config)
+    Object.entries(pendingRelated).forEach(([relatedId, count]) => {
+        if (count > 0) {
+            addToOrder({ 
+                dishId: relatedId, 
+                quantity: count,
+                // Note: Cross-sells added this way have no modifiers
+            });
+        }
+    });
+
     openProduct(null);
   };
 
   const handleQuickAdd = (e: React.MouseEvent, itemId: string) => {
       e.stopPropagation();
-      addToOrder({ dishId: itemId, quantity: 1 });
+      
+      // Update local state instead of global cart
+      setPendingRelated(prev => ({
+          ...prev,
+          [itemId]: (prev[itemId] || 0) + 1
+      }));
       
       // Trigger visual feedback
       setAddedFeedbackIds(prev => {
@@ -153,7 +188,17 @@ export const ProductSheet: React.FC = () => {
 
   const handleQuickRemove = (e: React.MouseEvent, itemId: string) => {
       e.stopPropagation();
-      removeFromOrder(itemId);
+      
+      // Update local state
+      setPendingRelated(prev => {
+          const current = prev[itemId] || 0;
+          if (current <= 1) {
+              const next = { ...prev };
+              delete next[itemId];
+              return next;
+          }
+          return { ...prev, [itemId]: current - 1 };
+      });
   };
 
   // --- Helper Calculations ---
@@ -351,34 +396,34 @@ export const ProductSheet: React.FC = () => {
                      </div>
                 )}
 
-                {/* 2. Cross Sells (Deduplicated with Visual Feedback + Decrement) */}
+                {/* 2. Cross Sells (Updated for Local State Accumulation) */}
                 {relatedDishes.length > 0 && (
                      <div className="mb-8">
                         <h3 className="text-xs font-bold uppercase tracking-widest text-text-main mb-3 flex items-center gap-2">
                             <span className="material-icons-round text-primary text-sm">thumb_up</span>
                             {isDrink ? 'Идеальная пара' : 'С этим вкусно'}
                         </h3>
+                        <p className="text-[9px] text-text-main/50 mb-2 -mt-1">Для выбора добавок нажмите на фото</p>
                         <div className="flex overflow-x-auto gap-3 pb-2 -mx-6 px-6 no-scrollbar snap-x">
                             {relatedDishes.map(item => {
                                 const isAdded = addedFeedbackIds.has(item.id);
-                                const qtyInCart = orderItems
-                                    .filter(o => o.participantId === myParticipantId && o.dishId === item.id)
-                                    .reduce((sum, i) => sum + i.quantity, 0);
+                                // Show Pending Quantity for this session only
+                                const qtyPending = pendingRelated[item.id] || 0;
 
                                 return (
                                 <div key={item.id} className="snap-start w-36 flex-shrink-0 bg-white rounded-xl border border-gray-100 shadow-sm flex flex-col overflow-hidden cursor-pointer active:scale-95 transition-transform" onClick={() => openProduct(item)}>
                                     <div className="w-full h-24 bg-gray-50 overflow-hidden relative">
                                         <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
                                         
-                                        {/* Quantity Badge (Persistent) */}
-                                        {qtyInCart > 0 && (
-                                            <div className="absolute top-1 left-1 bg-anthracite/90 backdrop-blur text-primary text-[10px] font-bold px-1.5 py-0.5 rounded-md shadow-sm border border-white/10 z-10">
-                                                {qtyInCart} шт
+                                        {/* Pending Quantity Badge */}
+                                        {qtyPending > 0 && (
+                                            <div className="absolute top-1 left-1 bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm border border-white/10 z-10 animate-bounce">
+                                                +{qtyPending}
                                             </div>
                                         )}
 
                                         {/* Minus Button (Left) - Only if qty > 0 */}
-                                        {qtyInCart > 0 && (
+                                        {qtyPending > 0 && (
                                             <button 
                                                 onClick={(e) => handleQuickRemove(e, item.id)}
                                                 className="absolute bottom-1 left-1 w-6 h-6 rounded-full bg-white/90 backdrop-blur text-anthracite flex items-center justify-center shadow-md hover:bg-white active:scale-95 transition-all z-20 border border-black/5"
@@ -393,7 +438,7 @@ export const ProductSheet: React.FC = () => {
                                             className={`absolute bottom-1 right-1 w-6 h-6 rounded-full flex items-center justify-center shadow-md transition-all duration-300 z-20 ${
                                                 isAdded 
                                                 ? 'bg-status-green text-white scale-110' 
-                                                : 'bg-primary text-white hover:bg-primary-dark'
+                                                : 'bg-anthracite text-white hover:bg-primary'
                                             }`}
                                         >
                                             <span className="material-icons-round text-[14px]">
