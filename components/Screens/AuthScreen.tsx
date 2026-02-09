@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useGameStore } from '../../store/GameContext';
 import { supabase } from '../../lib/supabase';
@@ -26,13 +27,20 @@ export const AuthScreen: React.FC = () => {
         });
 
         if (error) {
-            setErrorMsg(error.message);
+            console.error("Login Error:", error);
+            // Handle specific schema error which happens if auth.identities is missing or permissions are wrong
+            if (error.message.includes('schema') || error.message.includes('Database error')) {
+                setErrorMsg('Ошибка БД: Запустите docs/CREATE_ADMIN.sql');
+            } else {
+                setErrorMsg(error.message === 'Invalid login credentials' ? 'Неверный логин или пароль' : error.message);
+            }
         } else if (data.user) {
             // Success
             setIsAdmin(true);
             setActiveTab('admin');
         }
     } catch (err: any) {
+        console.error("Unexpected Login Error:", err);
         setErrorMsg('Ошибка соединения');
     } finally {
         setIsLoading(false);
@@ -64,7 +72,7 @@ export const AuthScreen: React.FC = () => {
                     <input 
                         type="email" 
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(e) => { setEmail(e.target.value); setErrorMsg(''); }}
                         className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white placeholder-white/20 focus:outline-none focus:border-gold transition-colors"
                         placeholder="admin@gastrovibe.com"
                         required
@@ -76,7 +84,7 @@ export const AuthScreen: React.FC = () => {
                     <input 
                         type="password" 
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={(e) => { setPassword(e.target.value); setErrorMsg(''); }}
                         className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white placeholder-white/20 focus:outline-none focus:border-gold transition-colors"
                         placeholder="••••••••"
                         required
@@ -84,8 +92,8 @@ export const AuthScreen: React.FC = () => {
                 </div>
 
                 {errorMsg && (
-                    <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg">
-                        <p className="text-xs text-red-200 text-center">{errorMsg}</p>
+                    <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg animate-pulse">
+                        <p className="text-xs text-red-200 text-center font-bold">{errorMsg}</p>
                     </div>
                 )}
 
@@ -99,7 +107,7 @@ export const AuthScreen: React.FC = () => {
             </form>
             
             <p className="text-center text-[10px] text-white/20 mt-8">
-                Нет аккаунта? Создайте его в Supabase Dashboard &rarr; Authentication.
+                Нет аккаунта? Запустите SQL скрипт из docs/CREATE_ADMIN.sql
             </p>
         </div>
     </div>

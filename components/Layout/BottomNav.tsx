@@ -6,6 +6,11 @@ import { Tab } from '../../types';
 export const BottomNav: React.FC = () => {
   const { activeTab, setActiveTab, orderItems, myParticipantId } = useGameStore();
 
+  // Hide BottomNav on Admin, Auth, and Debug screens
+  if (['admin', 'auth', 'debug'].includes(activeTab)) {
+      return null;
+  }
+
   const navItems: { id: Tab; icon: string; label: string }[] = [
     { id: 'table', icon: 'table_restaurant', label: 'Визит' },
     { id: 'games', icon: 'diamond', label: 'Клуб' }, // Swapped to 2nd position
