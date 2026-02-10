@@ -122,9 +122,10 @@ export const ProductSheet: React.FC = () => {
 
     // 2. Pending Related Items Cost
     Object.entries(pendingRelated).forEach(([relatedId, count]) => {
+        const c = count as number;
         const relatedItem = menuItems.find(i => i.id === relatedId);
         if (relatedItem) {
-            total += relatedItem.price * count;
+            total += relatedItem.price * c;
         }
     });
 
@@ -148,10 +149,11 @@ export const ProductSheet: React.FC = () => {
 
     // 2. Add Pending Related Items (Default config)
     Object.entries(pendingRelated).forEach(([relatedId, count]) => {
-        if (count > 0) {
+        const c = count as number;
+        if (c > 0) {
             addToOrder({ 
                 dishId: relatedId, 
-                quantity: count,
+                quantity: c,
                 // Note: Cross-sells added this way have no modifiers
             });
         }
@@ -164,7 +166,7 @@ export const ProductSheet: React.FC = () => {
       e.stopPropagation();
       
       // Update local state instead of global cart
-      setPendingRelated(prev => ({
+      setPendingRelated((prev: Record<string, number>) => ({
           ...prev,
           [itemId]: (prev[itemId] || 0) + 1
       }));
@@ -190,7 +192,7 @@ export const ProductSheet: React.FC = () => {
       e.stopPropagation();
       
       // Update local state
-      setPendingRelated(prev => {
+      setPendingRelated((prev: Record<string, number>) => {
           const current = prev[itemId] || 0;
           if (current <= 1) {
               const next = { ...prev };
@@ -208,11 +210,11 @@ export const ProductSheet: React.FC = () => {
     ? selectedVariant.volume 
     : (isDrink ? '350 мл' : '280 г');
   
-  const nutrition = selectedDish.nutrition || {
+  const nutrition = {
       calories: selectedDish.calories || 320,
-      protein: Math.round((selectedDish.calories || 320) * 0.20 / 4),
-      fats: Math.round((selectedDish.calories || 320) * 0.30 / 9),
-      carbs: Math.round((selectedDish.calories || 320) * 0.50 / 4)
+      protein: selectedDish.nutrition?.protein || Math.round((selectedDish.calories || 320) * 0.20 / 4),
+      fats: selectedDish.nutrition?.fats || Math.round((selectedDish.calories || 320) * 0.30 / 9),
+      carbs: selectedDish.nutrition?.carbs || Math.round((selectedDish.calories || 320) * 0.50 / 4)
   };
 
   // --- FIXED CROSS SELL LOGIC (Deduplication) ---

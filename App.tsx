@@ -1,4 +1,5 @@
-import React, { Suspense, ErrorInfo, ReactNode } from 'react';
+
+import React, { Component, Suspense, ErrorInfo, ReactNode } from 'react';
 import { GameProvider, useGameStore } from './store/GameContext';
 import { BottomNav } from './components/Layout/BottomNav';
 import { BurgerMenu } from './components/Layout/BurgerMenu';
@@ -28,11 +29,14 @@ interface ErrorBoundaryState {
 }
 
 // Error Boundary to catch crashes
-class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   public state: ErrorBoundaryState = {
     hasError: false,
     error: null
   };
+
+  // Explicitly declare props to satisfy strict TypeScript environments if implicit inheritance fails
+  declare props: Readonly<ErrorBoundaryProps>;
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };

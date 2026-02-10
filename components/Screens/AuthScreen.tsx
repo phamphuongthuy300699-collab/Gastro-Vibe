@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { useGameStore } from '../../store/GameContext';
 import { supabase } from '../../lib/supabase';
+import { TelegramLoginButton } from '../UI/TelegramLoginButton';
+import { TelegramUser } from '../../types';
 
 export const AuthScreen: React.FC = () => {
   const { setActiveTab, setIsAdmin } = useGameStore();
@@ -11,11 +13,80 @@ export const AuthScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
+  // Имя вашего бота
+  const TELEGRAM_BOT_NAME = 'GastroVibe_Auth_Bot'; 
+
   useEffect(() => {
     console.log("AuthScreen Mounted");
   }, []);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  // --- ЛОГИКА "ТЕНЕВОЙ" АВТОРИЗАЦИИ ---
+  const handleTelegramAuth = async (tgUser: TelegramUser) => {
+      setIsLoading(true);
+      setErrorMsg('');
+      console.log("Telegram Auth Data:", tgUser);
+
+      // 1. Генерируем "Теневые" учетные данные на основе Telegram ID
+      // Это позволяет нам использовать стандартную Auth таблицу Supabase
+      const shadowEmail = `${tgUser.id}@telegram.user`;
+      const shadowPassword = `tg_secret_${tgUser.id}_gastrovibe`; 
+
+      try {
+          // 2. Пробуем ВОЙТИ
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+              email: shadowEmail,
+              password: shadowPassword,
+          });
+
+          if (signInError && signInError.message.includes('Invalid login credentials')) {
+              // 3. Если не вышло (пользователь новый) -> РЕГИСТРИРУЕМ
+              console.log("User not found, registering...");
+              
+              const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+                  email: shadowEmail,
+                  password: shadowPassword,
+                  options: {
+                      data: {
+                          full_name: `${tgUser.first_name} ${tgUser.last_name || ''}`.trim(),
+                          avatar_url: tgUser.photo_url || '',
+                          telegram_id: tgUser.id
+                      }
+                  }
+              });
+
+              if (signUpError) throw signUpError;
+              
+              // Успешная регистрация
+              if (signUpData.user) {
+                  // Обновляем UI через слушатель в DataContext (он сам подхватит событие)
+                  console.log("Registered via Telegram Shadow Account");
+              }
+
+          } else if (signInError) {
+              throw signInError;
+          } else {
+              // 4. Успешный вход
+              // Нужно обновить данные профиля, если фото или имя в ТГ изменились
+              if (signInData.user) {
+                  await supabase.from('profiles').update({
+                      full_name: `${tgUser.first_name} ${tgUser.last_name || ''}`.trim(),
+                      avatar_url: tgUser.photo_url || ''
+                  }).eq('id', signInData.user.id);
+              }
+          }
+          
+          // Редирект в профиль после успеха
+          setTimeout(() => setActiveTab('profile'), 500);
+
+      } catch (err: any) {
+          console.error("Auth System Error:", err);
+          setErrorMsg('Ошибка авторизации: ' + err.message);
+      } finally {
+          setIsLoading(false);
+      }
+  };
+
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setErrorMsg('');
@@ -27,20 +98,16 @@ export const AuthScreen: React.FC = () => {
         });
 
         if (error) {
-            console.error("Login Error:", error);
-            // Handle specific schema error which happens if auth.identities is missing or permissions are wrong
             if (error.message.includes('schema') || error.message.includes('Database error')) {
                 setErrorMsg('Ошибка БД: Запустите docs/CREATE_ADMIN.sql');
             } else {
-                setErrorMsg(error.message === 'Invalid login credentials' ? 'Неверный логин или пароль' : error.message);
+                setErrorMsg('Неверный логин или пароль');
             }
         } else if (data.user) {
-            // Success
             setIsAdmin(true);
             setActiveTab('admin');
         }
     } catch (err: any) {
-        console.error("Unexpected Login Error:", err);
         setErrorMsg('Ошибка соединения');
     } finally {
         setIsLoading(false);
@@ -60,39 +127,67 @@ export const AuthScreen: React.FC = () => {
         </button>
 
         <div className="flex-1 flex flex-col justify-center max-w-xs mx-auto w-full z-10">
-            <div className="mb-8 text-center">
-                 <span className="material-icons-round text-5xl text-gold mb-4">admin_panel_settings</span>
-                 <h2 className="font-logo font-bold text-xl uppercase tracking-widest">Администратор</h2>
-                 <p className="text-white/40 text-xs mt-2 font-mono">Вход в систему управления</p>
+            <div className="mb-10 text-center">
+                 <h2 className="font-logo font-bold text-2xl uppercase tracking-widest text-primary mb-2">Gastro-Vibe</h2>
+                 <p className="text-white/40 text-xs font-mono">Авторизация</p>
             </div>
 
-            <form onSubmit={handleLogin} className="space-y-4">
+            {/* TELEGRAM BUTTON AREA */}
+            <div className="space-y-4 mb-12 flex flex-col items-center">
+                {/* 
+                    ВАЖНО: Кнопка Telegram рендерится через внешний скрипт.
+                    Она может не появиться на localhost, если домен не добавлен в @BotFather через /setdomain.
+                    Для тестов можно использовать ngrok или просто задеплоить проект.
+                */}
+                <div className="bg-white/5 p-2 rounded-xl w-full flex justify-center min-h-[60px]">
+                    <TelegramLoginButton 
+                        botName={TELEGRAM_BOT_NAME} 
+                        onAuth={handleTelegramAuth} 
+                    />
+                </div>
+                
+                <p className="text-center text-[10px] text-white/30 px-4">
+                    Нажимая "Войти", вы сохраняете свой прогресс, уровень и баланс GP.
+                </p>
+                
+                {isLoading && (
+                    <div className="text-primary text-xs font-bold animate-pulse">Обработка данных...</div>
+                )}
+            </div>
+
+            {/* Divider */}
+            <div className="relative flex py-5 items-center">
+                <div className="flex-grow border-t border-white/10"></div>
+                <span className="flex-shrink-0 mx-4 text-[10px] text-white/20 uppercase tracking-widest">Персонал</span>
+                <div className="flex-grow border-t border-white/10"></div>
+            </div>
+
+            {/* Admin Login */}
+            <form onSubmit={handleAdminLogin} className="space-y-4">
                 <div>
-                    <label className="text-[10px] uppercase font-bold tracking-widest text-white/50 mb-1 block">Email</label>
                     <input 
                         type="email" 
                         value={email}
                         onChange={(e) => { setEmail(e.target.value); setErrorMsg(''); }}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white placeholder-white/20 focus:outline-none focus:border-gold transition-colors"
+                        className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white text-xs placeholder-white/20 focus:outline-none focus:border-gold transition-colors"
                         placeholder="admin@gastrovibe.com"
                         required
                     />
                 </div>
                 
                 <div>
-                    <label className="text-[10px] uppercase font-bold tracking-widest text-white/50 mb-1 block">Пароль</label>
                     <input 
                         type="password" 
                         value={password}
                         onChange={(e) => { setPassword(e.target.value); setErrorMsg(''); }}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white placeholder-white/20 focus:outline-none focus:border-gold transition-colors"
-                        placeholder="••••••••"
+                        className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white text-xs placeholder-white/20 focus:outline-none focus:border-gold transition-colors"
+                        placeholder="Пароль"
                         required
                     />
                 </div>
 
                 {errorMsg && (
-                    <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg animate-pulse">
+                    <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg">
                         <p className="text-xs text-red-200 text-center font-bold">{errorMsg}</p>
                     </div>
                 )}
@@ -100,15 +195,11 @@ export const AuthScreen: React.FC = () => {
                 <button 
                     type="submit"
                     disabled={isLoading}
-                    className="w-full bg-gold text-anthracite font-bold text-sm uppercase tracking-widest py-4 rounded-xl hover:bg-white transition-colors mt-4 disabled:opacity-50"
+                    className="w-full bg-white/5 hover:bg-gold hover:text-black border border-white/10 text-white font-bold text-xs uppercase tracking-widest py-3 rounded-xl transition-all disabled:opacity-50"
                 >
-                    {isLoading ? 'Вход...' : 'Войти'}
+                    Вход для админов
                 </button>
             </form>
-            
-            <p className="text-center text-[10px] text-white/20 mt-8">
-                Нет аккаунта? Запустите SQL скрипт из docs/CREATE_ADMIN.sql
-            </p>
         </div>
     </div>
   );
