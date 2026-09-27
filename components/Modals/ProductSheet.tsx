@@ -368,7 +368,7 @@ export const ProductSheet: React.FC = () => {
                 </div>
 
                 <p className="text-text-main/80 text-sm leading-relaxed font-sans border-l-2 border-primary pl-3 mb-8">
-                    {selectedDish.description}
+                    {selectedDish.marketingCopy || selectedDish.description}
                 </p>
 
                 {/* --- SECTIONS --- */}
@@ -527,33 +527,33 @@ export const ProductSheet: React.FC = () => {
                 )}
             </div>
 
-            {/* Sticky Footer */}
-            <div className="absolute bottom-0 left-0 w-full bg-white/95 backdrop-blur-lg border-t border-black/5 p-6 pb-8 z-20">
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center bg-gray-100 rounded-xl h-12 px-2 shrink-0">
-                        <button 
-                            onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                            className="w-10 h-full flex items-center justify-center text-text-main/50 hover:text-text-main active:scale-90 transition-transform"
-                        >
-                            <span className="material-icons-round text-xl">remove</span>
-                        </button>
-                        <span className="w-6 text-center font-bold text-base text-text-main tabular-nums">{quantity}</span>
-                        <button 
-                            onClick={() => setQuantity(quantity + 1)}
-                            className="w-10 h-full flex items-center justify-center text-text-main/50 hover:text-text-main active:scale-90 transition-transform"
-                        >
-                            <span className="material-icons-round text-xl">add</span>
-                        </button>
-                    </div>
-
-                    <button 
-                        onClick={handleAdd}
-                        className="flex-1 h-12 bg-primary text-white rounded-xl flex items-center justify-between px-6 shadow-lg shadow-primary/30 hover:bg-primary-dark transition-colors active:scale-95"
-                    >
-                        <span className="font-bold text-xs uppercase tracking-widest">Добавить</span>
-                        <span className="font-mono text-lg font-bold">{calculateTotal()} ₽</span>
-                    </button>
-                </div>
+            {/* Sticky Footer: discovery pilot keeps the waiter in the loop */}
+            <div className="absolute bottom-0 left-0 w-full bg-white/95 backdrop-blur-lg border-t border-black/5 p-5 pb-8 z-20">
+                <button
+                    onClick={() => toggleFavorite(selectedDish.id)}
+                    className={`w-full h-14 rounded-2xl flex items-center justify-between px-5 shadow-lg transition-all active:scale-[0.98] ${
+                        isFavorite
+                            ? 'bg-anthracite text-white shadow-black/10'
+                            : 'bg-primary text-white shadow-primary/30'
+                    }`}
+                >
+                    <span className="flex items-center gap-3">
+                        <span className="material-icons-round text-2xl">
+                            {isFavorite ? 'check_circle' : 'favorite_border'}
+                        </span>
+                        <span className="text-left">
+                            <span className="block font-bold text-xs uppercase tracking-widest">
+                                {isFavorite ? 'В моём выборе' : 'Хочу попробовать'}
+                            </span>
+                            <span className="block text-[10px] opacity-70 mt-0.5">
+                                {isFavorite ? 'Нажмите, чтобы убрать' : 'Сохранить и показать официанту'}
+                            </span>
+                        </span>
+                    </span>
+                    <span className="font-mono text-lg font-bold">
+                        {selectedVariant ? selectedVariant.price : selectedDish.price} ₽
+                    </span>
+                </button>
             </div>
 
         </motion.div>
