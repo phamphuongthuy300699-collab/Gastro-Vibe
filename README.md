@@ -1,20 +1,44 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Маргарита VIBE
 
-# Run and deploy your AI Studio app
+Пилот интерактивного видеоменю для ресторана «Маргарита» (Druzhba Group).
 
-This contains everything you need to run your app locally.
+## Идея
 
-View your app in AI Studio: https://ai.studio/apps/drive/1WbkeaDoQRLzjJg_zv2zx6kueO80Ci1gH
+Текущее цифровое меню хорошо показывает ассортимент. Этот пилот добавляет слой визуального и эмоционального выбора:
 
-## Run Locally
+- **Меню** — актуальные блюда и разделы с визуальными обложками.
+- **VIBE** — вертикальная discovery-лента с видео и визуальными карточками.
+- **Мой выбор** — гостевой shortlist «Хочу попробовать», который можно показать официанту.
+- **Клуб** — дополнительный слой лояльности, игр и бонусов.
 
-**Prerequisites:**  Node.js
+Пилот не заменяет официанта и не пытается дублировать полноценную систему заказа.
 
+## Данные
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Контент загружается из Supabase. Клиент использует только publishable key.
+
+Переменные окружения при необходимости:
+
+```bash
+VITE_SUPABASE_URL=https://iviwccdyyvjrirgrbgsb.supabase.co
+VITE_SUPABASE_ANON_KEY=<publishable-key>
+```
+
+Для resilience демо в `lib/supabase.ts` также есть publishable fallback для пилотного проекта.
+
+## Локальный запуск
+
+```bash
+npm install
+npm run dev
+```
+
+Проверка production-сборки:
+
+```bash
+npm run build
+```
+
+## Ветка пилота
+
+Разработка для встречи ведётся в `margarita-pilot`. `main` не меняется до визуального подтверждения пилота.
