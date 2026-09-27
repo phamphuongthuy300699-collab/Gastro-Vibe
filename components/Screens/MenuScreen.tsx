@@ -3,6 +3,11 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useGameStore } from '../../store/GameContext';
 import { Dish } from '../../types';
 
+interface MenuScreenProps {
+    initialViewMode?: 'grid' | 'mood';
+    lockViewMode?: boolean;
+}
+
 // --- SUB-COMPONENT: Grid Item with Swipe ---
 const MenuGridItem: React.FC<{ item: Dish; onClick: () => void }> = ({ item, onClick }) => {
     const [activeIndex, setActiveIndex] = useState(0);
@@ -47,12 +52,18 @@ const MenuGridItem: React.FC<{ item: Dish; onClick: () => void }> = ({ item, onC
                 >
                     {/* Slide 1: Image */}
                     <div className="w-full h-full flex-shrink-0 snap-center relative">
-                        <img 
-                            alt={item.name} 
-                            className="w-full h-full object-cover" 
-                            src={item.imageUrl} 
-                            loading="lazy"
-                        />
+                        {item.imageUrl ? (
+                            <img
+                                alt={item.name}
+                                className="w-full h-full object-cover"
+                                src={item.imageUrl}
+                                loading="lazy"
+                            />
+                        ) : (
+                            <div className="w-full h-full bg-anthracite flex items-center justify-center px-4 text-center">
+                                <span className="font-logo text-primary text-sm tracking-[0.2em] uppercase">Маргарита</span>
+                            </div>
+                        )}
                     </div>
 
                     {/* Slide 2: Video (Only if exists) */}
@@ -136,8 +147,12 @@ const VibeFeedItem: React.FC<{
                         </span>
                     </button>
                     </div>
-            ) : (
+            ) : item.imageUrl ? (
                 <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+            ) : (
+                <div className="w-full h-full bg-anthracite flex items-center justify-center">
+                    <span className="font-logo text-primary text-2xl tracking-[0.2em] uppercase">Маргарита</span>
+                </div>
             )}
             
             <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/90 pointer-events-none"></div>
@@ -182,7 +197,7 @@ const VibeFeedItem: React.FC<{
     );
 };
 
-export const MenuScreen: React.FC = () => {
+export const MenuScreen: React.FC<MenuScreenProps> = ({ initialViewMode = 'grid', lockViewMode = false }) => {
   const { 
     openProduct, 
     openStory, 
@@ -198,7 +213,11 @@ export const MenuScreen: React.FC = () => {
   } = useGameStore();
   
   const [activeCategoryId, setActiveCategoryId] = useState<string>('all');
-  const [viewMode, setViewMode] = useState<'grid' | 'mood'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'mood'>(initialViewMode);
+
+  useEffect(() => {
+      setViewMode(initialViewMode);
+  }, [initialViewMode]);
   
   // Stories Scroll State
   const [activeStoryIndex, setActiveStoryIndex] = useState(0);
@@ -224,12 +243,14 @@ export const MenuScreen: React.FC = () => {
           }
       });
 
-      // Shuffle both lists for discovery so it's not static
-      const shuffledWithVideo = withVideo.sort(() => Math.random() - 0.5);
-      const shuffledWithoutVideo = withoutVideo.sort(() => Math.random() - 0.5);
+      const businessSort = (a: Dish, b: Dish) =>
+          Number(!!b.featured) - Number(!!a.featured) ||
+          (b.vibePriority || 0) - (a.vibePriority || 0) ||
+          a.name.localeCompare(b.name, 'ru');
 
-      // Prioritize items with video
-      return [...shuffledWithVideo, ...shuffledWithoutVideo];
+      withVideo.sort(businessSort);
+      withoutVideo.sort(businessSort);
+      return [...withVideo, ...withoutVideo];
   }, [menuItems]);
   // -----------------------
 
@@ -324,7 +345,7 @@ export const MenuScreen: React.FC = () => {
             </h1>
          </div>
          
-        <div className="flex items-center space-x-2 text-sm font-medium bg-background-soft rounded-full p-1 border border-black/5">
+        {!lockViewMode && <div className="flex items-center space-x-2 text-sm font-medium bg-background-soft rounded-full p-1 border border-black/5">
             <button 
                 onClick={() => setViewMode('grid')}
                 className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${viewMode === 'grid' ? 'bg-anthracite shadow-md text-primary' : 'text-text-main/40'}`}
@@ -337,7 +358,7 @@ export const MenuScreen: React.FC = () => {
             >
                 <span className="material-icons-round text-xl">play_arrow</span>
             </button>
-        </div>
+        </div>}
       </header>
 
       {/* Main Content Area */}
