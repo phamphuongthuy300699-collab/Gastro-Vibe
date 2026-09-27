@@ -140,10 +140,12 @@ export const ProductSheet: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto no-scrollbar px-6 pt-6 pb-32">
+          <div className="h-[9px] restaurant-wall shrink-0" />
+
+          <div className="flex-1 overflow-y-auto no-scrollbar px-6 pt-6 pb-32 bg-gradient-to-b from-background-soft/45 via-background-light to-background-light">
             <div className="flex justify-between items-baseline gap-4 mb-5">
-              <div className="text-[10px] uppercase tracking-[0.2em] font-bold text-text-main/40">
-                Хочу попробовать
+              <div className="text-[10px] uppercase tracking-[0.24em] font-logo font-bold text-primary">
+                Маргарита · Хочу попробовать
               </div>
               <div className="text-2xl font-bold font-mono text-primary whitespace-nowrap">
                 {selectedDish.price} ₽
