@@ -8,7 +8,8 @@ export type PilotEventName =
   | 'favorite_add'
   | 'favorite_remove'
   | 'category_open'
-  | 'club_open';
+  | 'club_open'
+  | 'story_open';
 
 interface PilotEventContext {
   dishId?: string;
