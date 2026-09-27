@@ -158,7 +158,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     .map(c => ({
                         id: c.id,
                         name: c.name,
-                        sortOrder: c.sort_order
+                        sortOrder: c.sort_order,
+                        imageUrl: c.image_url || undefined
                     }))
                     .filter(c => c.name.toLowerCase() !== 'лимонады и смузи');
                 setCategories(filteredCats);
@@ -183,7 +184,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             // 3. Fetch Dishes
             const { data: dishData, error: dishError } = await supabase
                 .from('dishes')
-                .select('*');
+                .select('*')
+                .eq('is_active', true);
 
             if (dishData && !dishError && dishData.length > 0) {
                 setMenuItems(dishData.map(d => ({
@@ -195,6 +197,11 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     videoUrl: d.video_url,
                     oldPrice: d.old_price,
                     xpReward: d.xp_reward,
+                    isActive: d.is_active,
+                    vibePriority: d.vibe_priority || 0,
+                    featured: d.featured || false,
+                    marketingCopy: d.marketing_copy || undefined,
+                    campaignTags: d.campaign_tags || [],
                     relatedItemIds: d.related_item_ids || [],
                     modifiers: d.modifiers || [],
                     ingredients: d.ingredients || [],
