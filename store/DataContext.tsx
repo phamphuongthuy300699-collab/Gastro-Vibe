@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
+import { trackPilotEvent } from '../lib/analytics';
 import { 
     UserProfile, TableSession, Participant, Visit, Dish, Category, OrderItem, DietaryPreferences, Story, CollectionSet 
 } from '../types';
@@ -84,8 +85,24 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [stories, setStories] = useState<Story[]>(DEFAULT_STORIES);
   const [collections, setCollections] = useState<CollectionSet[]>(DEFAULT_COLLECTIONS);
   
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [favorites, setFavorites] = useState<Set<string>>(() => {
+      if (typeof window === 'undefined') return new Set();
+      try {
+          const stored = window.localStorage.getItem('gastro-vibe-favorites');
+          return new Set<string>(stored ? JSON.parse(stored) : []);
+      } catch {
+          return new Set();
+      }
+  });
   const myParticipantId = 'p1';
+
+  useEffect(() => {
+      try {
+          window.localStorage.setItem('gastro-vibe-favorites', JSON.stringify(Array.from(favorites)));
+      } catch {
+          // Guest shortlist still works in-memory if storage is unavailable.
+      }
+  }, [favorites]);
 
   const [orderItems, setOrderItems] = useState<OrderItem[]>([
     {
@@ -347,13 +364,20 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const toggleFavorite = useCallback(async (dishId: string) => {
+      const wasFavorite = favorites.has(dishId);
+
       setFavorites(prev => {
           const next = new Set(prev);
           if (next.has(dishId)) next.delete(dishId);
           else next.add(dishId);
           return next;
       });
-  }, []);
+
+      await trackPilotEvent(wasFavorite ? 'favorite_remove' : 'favorite_add', {
+          dishId,
+          source: 'my-choice',
+      });
+  }, [favorites]);
 
   return (
     <DataContext.Provider value={{
