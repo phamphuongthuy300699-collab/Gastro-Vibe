@@ -2,7 +2,6 @@
 import React, { Component, Suspense, ErrorInfo, ReactNode } from 'react';
 import { GameProvider, useGameStore } from './store/GameContext';
 import { BottomNav } from './components/Layout/BottomNav';
-import { BurgerMenu } from './components/Layout/BurgerMenu';
 import { ProductSheet } from './components/Modals/ProductSheet';
 import { StoryViewer } from './components/Modals/StoryViewer';
 import { CollectionSelector } from './components/Modals/CollectionSelector';
@@ -83,7 +82,8 @@ const ScreenRenderer: React.FC = () => {
 
   switch (activeTab) {
     case 'table': return <TableScreen />;
-    case 'menu': return <MenuScreen />;
+    case 'menu': return <MenuScreen initialViewMode="grid" lockViewMode />;
+    case 'vibe': return <MenuScreen initialViewMode="mood" lockViewMode />;
     case 'bill': return <BillScreen />;
     case 'games': return <GamesScreen />;
     case 'profile': return <ProfileScreen />;
@@ -92,7 +92,7 @@ const ScreenRenderer: React.FC = () => {
     case 'settings': return <SettingsScreen />;
     case 'auth': return <AuthScreen />;
     case 'debug': return <DebugScreen />;
-    default: return <TableScreen />;
+    default: return <MenuScreen initialViewMode="grid" lockViewMode />;
   }
 };
 
@@ -107,7 +107,6 @@ const App: React.FC = () => {
           
           {/* Global UI Elements */}
           <BottomNav />
-          <BurgerMenu />
           
           {/* Modals */}
           <ProductSheet />
