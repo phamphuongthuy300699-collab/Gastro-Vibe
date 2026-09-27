@@ -2,6 +2,7 @@
 import React from 'react';
 import { useGameStore } from '../../store/GameContext';
 import { Tab } from '../../types';
+import { trackPilotEvent } from '../../lib/analytics';
 
 export const BottomNav: React.FC = () => {
   const { activeTab, setActiveTab } = useGameStore();
@@ -24,7 +25,10 @@ export const BottomNav: React.FC = () => {
           return (
             <li key={item.id}>
               <button
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => {
+                  if (item.id === 'games') void trackPilotEvent('club_open', { source: 'bottom-nav' });
+                  setActiveTab(item.id);
+                }}
                 className={`flex flex-col items-center gap-1 min-w-16 group transition-colors duration-300 relative ${isActive ? 'text-primary' : 'text-text-main/40 hover:text-primary'}`}
               >
                 <div className={`transition-transform duration-300 ${isActive ? 'transform -translate-y-1' : ''}`}>
