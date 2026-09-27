@@ -34,7 +34,8 @@ interface UIContextType {
 const UIContext = createContext<UIContextType | undefined>(undefined);
 
 export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [activeTab, setActiveTab] = useState<Tab>('table');
+  // Commercial pilot opens directly on the restaurant menu.
+  const [activeTab, setActiveTab] = useState<Tab>('menu');
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
   const [activeStory, setActiveStory] = useState<Story | null>(null);
   const [activeCollection, setActiveCollection] = useState<CollectionSet | null>(null);
