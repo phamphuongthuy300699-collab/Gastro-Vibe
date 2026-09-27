@@ -198,8 +198,9 @@ const VibeFeedItem: React.FC<VibeFeedItemProps> = ({
 
       <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/90 pointer-events-none" />
 
+      <div className="absolute top-0 left-0 right-0 h-[7px] restaurant-wall z-20 opacity-90" />
       <div className="absolute top-5 left-5 z-10">
-        <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/80">Маргарита · VIBE</span>
+        <span className="text-[10px] font-logo font-bold uppercase tracking-[0.24em] text-white/85">Маргарита · VIBE</span>
       </div>
 
       <div className="absolute bottom-24 left-0 w-full px-6 text-white pb-6 z-10">
@@ -253,6 +254,8 @@ const VibeFeedItem: React.FC<VibeFeedItemProps> = ({
 export const MenuScreen: React.FC<MenuScreenProps> = ({ initialViewMode = 'grid', lockViewMode = false }) => {
   const {
     openProduct,
+    openStory,
+    stories,
     menuItems,
     categories,
     isLoading,
@@ -320,6 +323,14 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ initialViewMode = 'grid'
       source,
     });
     openProduct(item);
+  };
+
+  const handleStoryOpen = (story: (typeof stories)[number]) => {
+    void trackPilotEvent('story_open', {
+      source: 'menu-stories',
+      metadata: { storyId: story.id },
+    });
+    openStory(story);
   };
 
   const scrollToCategory = (categoryId: string) => {
@@ -485,6 +496,56 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ initialViewMode = 'grid'
             </section>
           ) : (
             <>
+              {!!stories.length && (
+                <section className="pt-6 pb-5 bg-background-soft/55">
+                  <div className="px-5 mb-4 flex items-end justify-between">
+                    <div>
+                      <div className="text-[9px] font-bold uppercase tracking-[0.28em] text-primary mb-1">
+                        Сейчас в «Маргарите»
+                      </div>
+                      <h2 className="text-xl font-logo font-bold uppercase tracking-[0.08em]">
+                        Истории и акценты
+                      </h2>
+                    </div>
+                    <span className="text-[10px] text-text-main/40">листайте</span>
+                  </div>
+
+                  <div className="flex gap-5 overflow-x-auto no-scrollbar px-5 pb-1">
+                    {stories.map((story) => (
+                      <button
+                        key={story.id}
+                        onClick={() => handleStoryOpen(story)}
+                        className="w-[82px] shrink-0 text-center group"
+                      >
+                        <div className="w-[78px] h-[78px] mx-auto rounded-full p-[2px] border border-primary bg-background-light shadow-sm transition-transform group-active:scale-95">
+                          <div className="w-full h-full rounded-full p-[3px] bg-background-light">
+                            <div className="w-full h-full rounded-full overflow-hidden bg-anthracite">
+                              {story.previewImage ? (
+                                <img
+                                  src={story.previewImage}
+                                  alt={story.title.replace('\n', ' ')}
+                                  className="w-full h-full object-cover"
+                                  loading="lazy"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-primary font-logo text-[9px]">
+                                  M
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <span className="block mt-2 text-[9px] uppercase tracking-[0.12em] font-bold text-text-main whitespace-pre-line leading-tight">
+                          {story.title}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              <div className="h-[10px] restaurant-wall opacity-95" />
+
               <section className="pt-6 pb-5">
                 <div className="px-5 mb-4 flex items-end justify-between">
                   <div>
