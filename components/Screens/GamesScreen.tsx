@@ -13,7 +13,7 @@ interface MatchItem {
 }
 
 export const GamesScreen: React.FC = () => {
-  const { userProfile, setMenuOpen, participants } = useGameStore();
+  const { userProfile, participants } = useGameStore();
   const [activeView, setActiveView] = useState<GameView>('hub');
 
   // --- SUB-COMPONENTS ---
@@ -535,16 +535,14 @@ export const GamesScreen: React.FC = () => {
     <div className="flex flex-col h-full w-full bg-background-light text-text-main overflow-hidden relative">
        
        {/* 1. Header */}
-       <header className="px-6 pt-10 pb-6 flex-none bg-background-light z-20 flex items-center gap-4">
-         <button 
-            onClick={() => setMenuOpen(true)}
-            className="p-1 -ml-1 rounded-full hover:bg-black/5 transition text-text-main"
-         >
-            <span className="material-icons-round text-3xl">menu</span>
-         </button>
-         <h1 className="text-3xl font-extrabold tracking-wider uppercase font-sans text-text-main pt-1">
+       <header className="px-6 pt-8 pb-6 flex-none bg-background-light z-20">
+         <div className="text-[9px] font-bold uppercase tracking-[0.28em] text-primary mb-2">Маргарита</div>
+         <h1 className="text-3xl font-extrabold tracking-wider uppercase font-sans text-text-main leading-none">
             Клуб привилегий
          </h1>
+         <p className="text-xs text-text-main/45 mt-2">
+            Игры и бонусы — дополнительный слой лояльности, а не замена сервису.
+         </p>
        </header>
 
        {/* Main Scrollable Content */}
