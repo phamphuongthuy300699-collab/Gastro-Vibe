@@ -537,13 +537,14 @@ export const GamesScreen: React.FC = () => {
        {/* 1. Header */}
        <header className="px-6 pt-8 pb-6 flex-none bg-background-light z-20">
          <div className="text-[9px] font-bold uppercase tracking-[0.28em] text-primary mb-2">Маргарита</div>
-         <h1 className="text-3xl font-extrabold tracking-wider uppercase font-sans text-text-main leading-none">
+         <h1 className="text-3xl font-logo font-bold tracking-[0.08em] uppercase text-text-main leading-none">
             Клуб привилегий
          </h1>
          <p className="text-xs text-text-main/45 mt-2">
             Игры и бонусы — дополнительный слой лояльности, а не замена сервису.
          </p>
        </header>
+       <div className="h-[9px] restaurant-wall shrink-0 opacity-95" />
 
        {/* Main Scrollable Content */}
        <main className="flex-1 overflow-y-auto no-scrollbar pb-32">
@@ -551,11 +552,9 @@ export const GamesScreen: React.FC = () => {
         {/* 2. Membership Card */}
         <section className="px-4 mb-2 relative z-10">
             <div className="relative w-full h-56 rounded-3xl p-6 overflow-hidden flex flex-col justify-between text-white shadow-2xl" style={{ background: 'linear-gradient(145deg, #2e2e2e 0%, #1a1a1a 100%)', boxShadow: '0 10px 40px -10px rgba(0, 0, 0, 0.5)' }}>
-                {/* Mural Overlay */}
-                <div className="absolute right-0 top-0 bottom-0 w-3/5 opacity-40 mix-blend-overlay pointer-events-none">
-                    <img alt="Mural Art" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjL09xVAuNcfJRF3a7V_PJBoGQgfqfrNwVmGUNtZl71sl_gZWny3xirNUeHym-HZReQ1UOwOtJ5xb_mOxZwvXXBzZDBSwYzTBzPgrxqThypenCX2bvWGRC74XtVsITexCmgHoiCRSVO-cXgwLQrOoRPXFLDL8AmS-8qO3PXTfbpKnR8fKSYotMXkq3ueMEs0Ek9vz6FcUH2HaQ_Y7E97T4XiJKZCLuR8K9Ve4Ok2twO0I4bpMuWxXo8-wqvn9eAqBtGvS4NF-J" />
-                    <div className="absolute inset-0 bg-gradient-to-l from-transparent to-[#1a1a1a]"></div>
-                </div>
+                <div className="absolute left-0 right-0 top-0 h-[10px] restaurant-wall opacity-90 pointer-events-none" />
+                <div className="absolute right-5 top-5 w-24 h-24 rounded-full border border-primary/20 pointer-events-none" />
+                <div className="absolute right-10 top-10 w-14 h-14 rounded-full border border-primary/10 pointer-events-none" />
 
                 <div className="relative z-10">
                     <div className="flex justify-between items-start">
