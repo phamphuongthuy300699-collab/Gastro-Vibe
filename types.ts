@@ -1,5 +1,5 @@
 
-export type Tab = 'table' | 'menu' | 'bill' | 'games' | 'profile' | 'events' | 'admin' | 'settings' | 'auth' | 'debug';
+export type Tab = 'table' | 'menu' | 'vibe' | 'bill' | 'games' | 'profile' | 'events' | 'admin' | 'settings' | 'auth' | 'debug';
 export type AppTheme = 'light' | 'dark' | 'system';
 export type SplitType = 'personal' | 'equal' | 'manual';
 export type AdminRole = 'admin' | 'kitchen' | 'waiter';
@@ -56,6 +56,11 @@ export interface Dish {
         fats: number;
         carbs: number;
     };
+    isActive?: boolean;
+    vibePriority?: number;
+    featured?: boolean;
+    marketingCopy?: string;
+    campaignTags?: string[];
 }
 
 export interface Participant {
@@ -220,6 +225,7 @@ export interface Category {
     id: string;
     name: string;
     sortOrder: number;
+    imageUrl?: string;
 }
 
 export interface RestaurantEvent {
