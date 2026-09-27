@@ -3,8 +3,6 @@ import React, { Component, Suspense, ErrorInfo, ReactNode } from 'react';
 import { GameProvider, useGameStore } from './store/GameContext';
 import { BottomNav } from './components/Layout/BottomNav';
 import { ProductSheet } from './components/Modals/ProductSheet';
-import { StoryViewer } from './components/Modals/StoryViewer';
-import { CollectionSelector } from './components/Modals/CollectionSelector';
 
 // Lazy Loading Screens
 const TableScreen = React.lazy(() => import('./components/Screens/TableScreen').then(m => ({ default: m.TableScreen })));
@@ -110,8 +108,6 @@ const App: React.FC = () => {
           
           {/* Modals */}
           <ProductSheet />
-          <StoryViewer />
-          <CollectionSelector />
         </div>
       </GameProvider>
     </ErrorBoundary>
