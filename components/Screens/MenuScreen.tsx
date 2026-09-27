@@ -1,4 +1,3 @@
-
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useGameStore } from '../../store/GameContext';
 import { Dish } from '../../types';
@@ -23,7 +22,6 @@ const MenuGridItem: React.FC<MenuGridItemProps> = ({ item, isSaved, onOpen, onSa
 
   const handleScroll = () => {
     if (!scrollRef.current) return;
-
     const width = scrollRef.current.offsetWidth;
     const nextIndex = Math.round(scrollRef.current.scrollLeft / width);
     setActiveIndex(nextIndex);
@@ -43,7 +41,7 @@ const MenuGridItem: React.FC<MenuGridItemProps> = ({ item, isSaved, onOpen, onSa
   }, [item.videoUrl]);
 
   return (
-    <div className="group cursor-pointer mb-8" onClick={onOpen}>
+    <article className="group cursor-pointer mb-8" onClick={onOpen}>
       <div className="relative rounded-xl overflow-hidden aspect-[3/4] mb-3 bg-gray-100 shadow-sm border border-black/5">
         <div
           ref={scrollRef}
@@ -85,15 +83,15 @@ const MenuGridItem: React.FC<MenuGridItemProps> = ({ item, isSaved, onOpen, onSa
             onSave();
           }}
           aria-label={isSaved ? 'Убрать из моего выбора' : 'Добавить в мой выбор'}
-          className={`absolute top-2 left-2 z-20 w-9 h-9 rounded-full backdrop-blur-md border border-white/20 shadow-md flex items-center justify-center transition-all ${
+          className={`absolute top-2 left-2 z-20 w-10 h-10 rounded-full backdrop-blur-md border border-white/20 shadow-md flex items-center justify-center transition-all ${
             isSaved ? 'bg-primary text-white' : 'bg-black/35 text-white'
           }`}
         >
-          <span className="material-icons-round text-[20px]">{isSaved ? 'favorite' : 'favorite_border'}</span>
+          <span className="material-icons-round text-[22px]">{isSaved ? 'favorite' : 'favorite_border'}</span>
         </button>
 
         <div className="absolute top-2 right-2 z-10">
-          <div className="bg-anthracite/90 backdrop-blur px-2 py-1 rounded-md shadow-sm border border-white/10">
+          <div className="bg-anthracite/90 backdrop-blur px-3 py-2 rounded-lg shadow-sm border border-white/10">
             <span className="text-xs font-bold text-primary tabular-nums">{item.price} ₽</span>
           </div>
         </div>
@@ -108,11 +106,11 @@ const MenuGridItem: React.FC<MenuGridItemProps> = ({ item, isSaved, onOpen, onSa
 
       <div className="px-1">
         <h3 className="font-bold text-[12px] uppercase tracking-wide leading-tight mb-1 text-text-main">{item.name}</h3>
-        <p className="text-[10px] text-text-main/60 leading-relaxed font-sans line-clamp-2">
+        <p className="text-[10px] text-text-main/55 leading-relaxed font-sans line-clamp-2">
           {item.marketingCopy || item.description}
         </p>
       </div>
-    </div>
+    </article>
   );
 };
 
@@ -183,7 +181,8 @@ const VibeFeedItem: React.FC<VibeFeedItemProps> = ({
               event.stopPropagation();
               toggleMute();
             }}
-            className="absolute top-5 right-4 z-20 w-10 h-10 bg-black/40 backdrop-blur rounded-full flex items-center justify-center text-white/80 hover:bg-black/60 transition"
+            className="absolute top-5 right-4 z-20 w-11 h-11 bg-black/40 backdrop-blur rounded-full flex items-center justify-center text-white/80"
+            aria-label={isMuted ? 'Включить звук' : 'Выключить звук'}
           >
             <span className="material-icons-round text-xl">{isMuted ? 'volume_off' : 'volume_up'}</span>
           </button>
@@ -197,28 +196,20 @@ const VibeFeedItem: React.FC<VibeFeedItemProps> = ({
       )}
 
       <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/90 pointer-events-none" />
-
       <div className="absolute top-0 left-0 right-0 h-[7px] restaurant-wall z-20 opacity-90" />
+
       <div className="absolute top-5 left-5 z-10">
         <span className="text-[10px] font-logo font-bold uppercase tracking-[0.24em] text-white/85">Маргарита · VIBE</span>
       </div>
 
       <div className="absolute bottom-24 left-0 w-full px-6 text-white pb-6 z-10">
         <div className="flex justify-between items-end mb-4">
-          <div className="flex-1 pr-4">
-            <div className="flex gap-2 mb-2">
-              {!!item.badges?.length && (
-                <span className="inline-block bg-primary/90 text-anthracite text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-sm">
-                  {item.badges[0]}
-                </span>
-              )}
-              {!!item.abv && (
-                <span className="inline-block bg-white/20 backdrop-blur text-white text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-sm">
-                  ABV {item.abv}%
-                </span>
-              )}
-            </div>
-
+          <div className="flex-1 pr-4 min-w-0">
+            {!!item.badges?.length && (
+              <span className="inline-block mb-2 bg-primary/90 text-anthracite text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-sm">
+                {item.badges[0]}
+              </span>
+            )}
             <h2 className="text-3xl font-logo font-bold uppercase tracking-wider mb-2 leading-none drop-shadow-md">
               {item.name}
             </h2>
@@ -232,14 +223,14 @@ const VibeFeedItem: React.FC<VibeFeedItemProps> = ({
         <div className="mt-6 flex gap-3">
           <button
             onClick={onOpen}
-            className="flex-1 bg-white/10 backdrop-blur-md border border-white/20 text-white font-bold text-xs uppercase tracking-widest py-4 rounded-xl hover:bg-white/20 transition-colors"
+            className="flex-1 bg-white/10 backdrop-blur-md border border-white/20 text-white font-bold text-xs uppercase tracking-widest py-4 rounded-xl"
           >
             Подробнее
           </button>
           <button
             onClick={onSave}
             aria-label={isSaved ? 'Сохранено в моём выборе' : 'Сохранить в мой выбор'}
-            className={`w-14 h-14 rounded-xl flex items-center justify-center hover:scale-105 transition-transform shadow-lg ${
+            className={`w-14 h-14 rounded-xl flex items-center justify-center transition-transform shadow-lg ${
               isSaved ? 'bg-white text-primary' : 'bg-primary text-anthracite shadow-primary/30'
             }`}
           >
@@ -251,7 +242,9 @@ const VibeFeedItem: React.FC<VibeFeedItemProps> = ({
   );
 };
 
-export const MenuScreen: React.FC<MenuScreenProps> = ({ initialViewMode = 'grid', lockViewMode = false }) => {
+const OPEN_CHOICE_KEY = 'gastro-vibe-open-choice';
+
+export const MenuScreen: React.FC<MenuScreenProps> = ({ initialViewMode = 'grid' }) => {
   const {
     openProduct,
     openStory,
@@ -261,6 +254,7 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ initialViewMode = 'grid'
     isLoading,
     favorites,
     toggleFavorite,
+    setActiveTab,
   } = useGameStore();
 
   const [activeCategoryId, setActiveCategoryId] = useState<string>('all');
@@ -274,6 +268,19 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ initialViewMode = 'grid'
 
   useEffect(() => {
     setViewMode(initialViewMode);
+
+    if (initialViewMode === 'grid') {
+      try {
+        const shouldOpenChoice = window.sessionStorage.getItem(OPEN_CHOICE_KEY) === '1';
+        if (shouldOpenChoice) {
+          setShowFavoritesOnly(true);
+          window.sessionStorage.removeItem(OPEN_CHOICE_KEY);
+        }
+      } catch {
+        // Navigation still works if sessionStorage is unavailable.
+      }
+    }
+
     void trackPilotEvent(initialViewMode === 'mood' ? 'vibe_open' : 'menu_open', {
       source: initialViewMode === 'mood' ? 'vibe' : 'menu',
     });
@@ -305,13 +312,11 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ initialViewMode = 'grid'
 
   useEffect(() => {
     if (showFavoritesOnly) return;
-
     const tabsContainer = tabsContainerRef.current;
     const activeTab = document.getElementById(`tab-btn-${activeCategoryId}`);
 
     if (tabsContainer && activeTab) {
-      const targetLeft =
-        activeTab.offsetLeft - tabsContainer.clientWidth / 2 + activeTab.offsetWidth / 2;
+      const targetLeft = activeTab.offsetLeft - tabsContainer.clientWidth / 2 + activeTab.offsetWidth / 2;
       tabsContainer.scrollTo({ left: targetLeft, behavior: 'smooth' });
     }
   }, [activeCategoryId, showFavoritesOnly]);
@@ -325,12 +330,29 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ initialViewMode = 'grid'
     openProduct(item);
   };
 
-  const handleStoryOpen = (story: (typeof stories)[number]) => {
-    void trackPilotEvent('story_open', {
-      source: 'menu-stories',
-      metadata: { storyId: story.id },
-    });
-    openStory(story);
+  const openMyChoiceFromVibe = () => {
+    try {
+      window.sessionStorage.setItem(OPEN_CHOICE_KEY, '1');
+    } catch {
+      // Fallback below still returns to the menu.
+    }
+    setActiveTab('menu');
+  };
+
+  const handleHeaderTitleClick = () => {
+    if (viewMode === 'mood') {
+      setActiveTab('menu');
+      return;
+    }
+
+    if (showFavoritesOnly) {
+      setShowFavoritesOnly(false);
+      setActiveCategoryId('all');
+      window.setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 0);
+      return;
+    }
+
+    scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const scrollToCategory = (categoryId: string) => {
@@ -339,10 +361,7 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ initialViewMode = 'grid'
     setActiveCategoryId(categoryId);
 
     if (categoryId !== 'all') {
-      void trackPilotEvent('category_open', {
-        categoryId,
-        source: 'menu',
-      });
+      void trackPilotEvent('category_open', { categoryId, source: 'menu' });
     }
 
     const container = scrollContainerRef.current;
@@ -352,10 +371,7 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ initialViewMode = 'grid'
       } else {
         const element = document.getElementById(`cat-${categoryId}`);
         if (element) {
-          container.scrollTo({
-            top: Math.max(0, element.offsetTop - 65),
-            behavior: 'smooth',
-          });
+          container.scrollTo({ top: Math.max(0, element.offsetTop - 65), behavior: 'smooth' });
         }
       }
     }
@@ -376,12 +392,10 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ initialViewMode = 'grid'
 
     const scrollOffset = container.scrollTop + 85;
     let currentId = 'all';
-
     for (const category of categories) {
       const element = document.getElementById(`cat-${category.id}`);
       if (element && element.offsetTop <= scrollOffset) currentId = category.id;
     }
-
     if (currentId !== activeCategoryId) setActiveCategoryId(currentId);
   };
 
@@ -397,12 +411,12 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ initialViewMode = 'grid'
   return (
     <div className="flex flex-col h-full overflow-hidden bg-background-light text-text-main font-sans">
       <header className="flex justify-between items-center px-5 pt-5 pb-4 bg-background-light z-40 shrink-0 shadow-sm border-b border-black/5">
-        <div>
+        <button onClick={handleHeaderTitleClick} className="text-left active:opacity-60 transition-opacity" aria-label="Вернуться в меню">
           <div className="text-[9px] font-bold uppercase tracking-[0.28em] text-primary mb-1">Маргарита</div>
           <h1 className="text-2xl font-logo font-bold tracking-[0.16em] uppercase text-text-main leading-none">
             {viewMode === 'grid' ? 'Меню' : 'VIBE'}
           </h1>
-        </div>
+        </button>
 
         {viewMode === 'grid' ? (
           <button
@@ -420,31 +434,16 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ initialViewMode = 'grid'
             </span>
           </button>
         ) : (
-          <div className="h-10 px-3 rounded-full bg-black/5 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider">
+          <button
+            onClick={openMyChoiceFromVibe}
+            className="h-10 px-3 rounded-full bg-black/5 border border-black/5 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider active:scale-[0.98] transition-transform"
+          >
             <span className="material-icons-round text-[18px] text-primary">favorite</span>
-            {favorites.size}
-          </div>
-        )}
-
-        {!lockViewMode && (
-          <div className="absolute right-5 top-[72px] flex items-center space-x-2 bg-background-soft rounded-full p-1 border border-black/5 z-40">
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
-                viewMode === 'grid' ? 'bg-anthracite shadow-md text-primary' : 'text-text-main/40'
-              }`}
-            >
-              <span className="material-icons-round text-xl">grid_view</span>
-            </button>
-            <button
-              onClick={() => setViewMode('mood')}
-              className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
-                viewMode === 'mood' ? 'bg-anthracite shadow-md text-primary' : 'text-text-main/40'
-              }`}
-            >
-              <span className="material-icons-round text-xl">play_arrow</span>
-            </button>
-          </div>
+            Мой выбор
+            <span className="min-w-5 h-5 px-1 rounded-full bg-primary/15 text-primary flex items-center justify-center">
+              {favorites.size}
+            </span>
+          </button>
         )}
       </header>
 
@@ -459,9 +458,7 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ initialViewMode = 'grid'
               <div className="mb-7">
                 <div className="text-[10px] uppercase tracking-[0.24em] font-bold text-primary mb-2">Хочу попробовать</div>
                 <h2 className="text-3xl font-logo font-bold uppercase tracking-wide mb-2">Мой выбор</h2>
-                <p className="text-sm text-text-main/55 max-w-xs">
-                  Сохраните понравившиеся блюда и покажите этот список официанту.
-                </p>
+                <p className="text-sm text-text-main/55 max-w-xs">Сохраните понравившиеся блюда и покажите этот список официанту.</p>
               </div>
 
               {favoriteItems.length > 0 ? (
@@ -482,9 +479,7 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ initialViewMode = 'grid'
                     <span className="material-icons-round text-3xl">favorite_border</span>
                   </div>
                   <h3 className="font-bold uppercase tracking-wide mb-2">Пока пусто</h3>
-                  <p className="text-sm text-text-main/50 mb-5">
-                    Нажимайте на сердечко в меню или VIBE — блюда появятся здесь.
-                  </p>
+                  <p className="text-sm text-text-main/50 mb-5">Нажимайте на сердечко в меню или VIBE — блюда появятся здесь.</p>
                   <button
                     onClick={() => setShowFavoritesOnly(false)}
                     className="px-5 py-3 rounded-xl bg-anthracite text-white text-xs font-bold uppercase tracking-widest"
@@ -500,12 +495,8 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ initialViewMode = 'grid'
                 <section className="pt-6 pb-5 bg-background-soft/55">
                   <div className="px-5 mb-4 flex items-end justify-between">
                     <div>
-                      <div className="text-[9px] font-bold uppercase tracking-[0.28em] text-primary mb-1">
-                        Сейчас в «Маргарите»
-                      </div>
-                      <h2 className="text-xl font-logo font-bold uppercase tracking-[0.08em]">
-                        Истории и акценты
-                      </h2>
+                      <div className="text-[9px] font-bold uppercase tracking-[0.28em] text-primary mb-1">Сейчас в «Маргарите»</div>
+                      <h2 className="text-xl font-logo font-bold uppercase tracking-[0.08em]">Истории и акценты</h2>
                     </div>
                     <span className="text-[10px] text-text-main/40">листайте</span>
                   </div>
@@ -514,28 +505,15 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ initialViewMode = 'grid'
                     {stories.map((story) => (
                       <button
                         key={story.id}
-                        onClick={() => handleStoryOpen(story)}
+                        onClick={() => openStory(story)}
                         className="w-[82px] shrink-0 text-center group"
                       >
                         <div className="w-[78px] h-[78px] mx-auto rounded-full p-[2px] border border-primary bg-background-light shadow-sm transition-transform group-active:scale-95">
-                          <div className="w-full h-full rounded-full p-[3px] bg-background-light">
-                            <div className="w-full h-full rounded-full overflow-hidden bg-anthracite">
-                              {story.previewImage ? (
-                                <img
-                                  src={story.previewImage}
-                                  alt={story.title.replace('\n', ' ')}
-                                  className="w-full h-full object-cover"
-                                  loading="lazy"
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center text-primary font-logo text-[9px]">
-                                  M
-                                </div>
-                              )}
-                            </div>
+                          <div className="w-full h-full rounded-full overflow-hidden border-2 border-background-light">
+                            <img src={story.previewImage} alt={story.title} className="w-full h-full object-cover" loading="lazy" />
                           </div>
                         </div>
-                        <span className="block mt-2 text-[9px] uppercase tracking-[0.12em] font-bold text-text-main whitespace-pre-line leading-tight">
+                        <span className="block mt-2 text-[9px] leading-tight font-bold uppercase tracking-[0.12em] text-text-main">
                           {story.title}
                         </span>
                       </button>
@@ -544,7 +522,7 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ initialViewMode = 'grid'
                 </section>
               )}
 
-              <div className="h-[10px] restaurant-wall opacity-95" />
+              <div className="w-full h-[9px] restaurant-wall opacity-95" />
 
               <section className="pt-6 pb-5">
                 <div className="px-5 mb-4 flex items-end justify-between">
@@ -563,12 +541,7 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ initialViewMode = 'grid'
                       className="relative w-28 h-36 shrink-0 rounded-2xl overflow-hidden text-left shadow-md bg-anthracite"
                     >
                       {category.imageUrl ? (
-                        <img
-                          src={category.imageUrl}
-                          alt={category.name}
-                          className="absolute inset-0 w-full h-full object-cover"
-                          loading="lazy"
-                        />
+                        <img src={category.imageUrl} alt={category.name} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
                       ) : (
                         <div className="absolute inset-0 bg-anthracite" />
                       )}
@@ -587,23 +560,18 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ initialViewMode = 'grid'
                     id="tab-btn-all"
                     onClick={() => scrollToCategory('all')}
                     className={`pb-3 text-[11px] font-bold tracking-[0.2em] border-b-[2px] transition-colors whitespace-nowrap uppercase shrink-0 ${
-                      activeCategoryId === 'all'
-                        ? 'border-primary text-text-main'
-                        : 'border-transparent text-text-main/40'
+                      activeCategoryId === 'all' ? 'border-primary text-text-main' : 'border-transparent text-text-main/40'
                     }`}
                   >
                     Все
                   </button>
-
                   {categories.map((category) => (
                     <button
                       key={category.id}
                       id={`tab-btn-${category.id}`}
                       onClick={() => scrollToCategory(category.id)}
                       className={`pb-3 text-[11px] font-bold tracking-[0.2em] border-b-[2px] transition-colors whitespace-nowrap uppercase shrink-0 ${
-                        activeCategoryId === category.id
-                          ? 'border-primary text-text-main'
-                          : 'border-transparent text-text-main/40'
+                        activeCategoryId === category.id ? 'border-primary text-text-main' : 'border-transparent text-text-main/40'
                       }`}
                     >
                       {category.name}
@@ -621,16 +589,9 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ initialViewMode = 'grid'
                     <section key={category.id} id={`cat-${category.id}`} className="mb-5">
                       <div className="flex items-center gap-3 mb-6">
                         {category.imageUrl && (
-                          <img
-                            src={category.imageUrl}
-                            alt=""
-                            className="w-10 h-10 rounded-xl object-cover"
-                            loading="lazy"
-                          />
+                          <img src={category.imageUrl} alt="" className="w-10 h-10 rounded-xl object-cover" loading="lazy" />
                         )}
-                        <h2 className="text-lg font-logo font-bold uppercase tracking-widest text-text-main">
-                          {category.name}
-                        </h2>
+                        <h2 className="text-lg font-logo font-bold uppercase tracking-widest text-text-main">{category.name}</h2>
                         <div className="h-px flex-1 bg-black/5" />
                       </div>
 
